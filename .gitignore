@@ -1,3 +1,13 @@
+# MSVC output directories\
+.vs/
+Debug/
+Release/
+x64/
+/packages/
+
+# Doxygen output
+/docs/html/
+
 # Prerequisites
 *.d
 
