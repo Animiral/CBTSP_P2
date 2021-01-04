@@ -33,7 +33,14 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClCompile Include="aco_test.cpp" />
     <ClCompile Include="cbtsp_test.cpp" />
+    <ClCompile Include="config_test.cpp" />
+    <ClCompile Include="construction_test.cpp" />
+    <ClCompile Include="grasp_test.cpp" />
+    <ClCompile Include="local_test.cpp" />
+    <ClCompile Include="statistics_test.cpp" />
+    <ClCompile Include="vnd_test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CBTSP2\CBTSP2.vcxproj">

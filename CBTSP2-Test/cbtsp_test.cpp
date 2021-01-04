@@ -3,7 +3,7 @@
 
 import cbtsp;
 
-// Ensure that instances are parsed correctly from a well-formed text.
+// Ensure that problems are parsed correctly from a well-formed text.
 TEST(Cbtsp, FromText)
 {
     const auto text = "3 3\n0 1 1\n0 2 -1\n1 2 3\n";
@@ -17,10 +17,10 @@ TEST(Cbtsp, FromText)
     EXPECT_EQ(3, problem.value(2, 1));
 }
 
-// Ensure that the instance's big_m is properly calculated.
+// Ensure that the problem's big-M is properly calculated.
 TEST(Cbtsp, BigM)
 {
-    auto problem = Problem(4);
+    auto problem = Problem(4ull);
     problem.addEdge({ 0, 1, 1 });
     problem.addEdge({ 1, 2, 3 });
     problem.addEdge({ 2, 3, -1 });
@@ -31,4 +31,41 @@ TEST(Cbtsp, BigM)
     problem.calculateBigM();
     EXPECT_EQ(8, problem.bigM());
     EXPECT_EQ(8, problem.value(3, 1));
+}
+
+//def setUp(self) :
+//    self.instance = Instance(4)
+//    self.instance.add_edge(Edge(0, 1, 1))
+//    self.instance.add_edge(Edge(0, 2, -1))
+//    self.instance.add_edge(Edge(1, 2, 3))
+//    self.instance.add_edge(Edge(2, 3, 5))
+//    self.instance.add_edge(Edge(3, 0, 0))
+
+// Ensure that the value of the solution is correctly computed from the sum of edge values.
+TEST(Cbtsp, SolutionValue)
+{
+    //solution = Solution(self.instance, [0, 1, 2])
+    //self.assertEqual(3, solution.value)
+}
+
+// Ensure that the the solution is correctly normalized.
+TEST(Cbtsp, Normalize)
+{
+    //solution = Solution(self.instance, [3, 2, 1])
+    //self.assertEqual([1, 2, 3], solution.normalized().vertices)
+}
+
+// Ensure that the string representation of the solution is as expected.
+TEST(Cbtsp, SolutionString)
+{
+    //solution = Solution(self.instance, [3, 0, 1])
+    //self.assertEqual("3 0 1", str(solution))
+}
+
+// Test the feasibility evaluation.
+TEST(Cbtsp, IsFeasible)
+{
+    //self.assertTrue(Solution(self.instance, [0, 1, 2, 3]).is_feasible())
+    //self.assertFalse(Solution(self.instance, [3, 0, 1]).is_feasible())
+    //self.assertFalse(Solution(self.instance, [0, 2, 3, 1]).is_feasible())
 }

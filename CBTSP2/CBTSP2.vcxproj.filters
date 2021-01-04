@@ -5,12 +5,57 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="Module Interface Files">
+      <UniqueIdentifier>{ca97cdce-0290-42a1-b716-b0edc305ef07}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="util.ixx">
+    <ClCompile Include="util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cbtsp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cbtsp.ixx">
+      <Filter>Module Interface Files</Filter>
+    </ClCompile>
+    <ClCompile Include="construction.ixx">
+      <Filter>Module Interface Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util.ixx">
+      <Filter>Module Interface Files</Filter>
+    </ClCompile>
+    <ClCompile Include="construction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="local.ixx">
+      <Filter>Module Interface Files</Filter>
+    </ClCompile>
+    <ClCompile Include="local.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="grasp.ixx">
+      <Filter>Module Interface Files</Filter>
+    </ClCompile>
+    <ClCompile Include="grasp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vnd.ixx">
+      <Filter>Module Interface Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aco.ixx">
+      <Filter>Module Interface Files</Filter>
+    </ClCompile>
+    <ClCompile Include="statistics.ixx">
+      <Filter>Module Interface Files</Filter>
+    </ClCompile>
+    <ClCompile Include="statistics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="config.ixx">
+      <Filter>Module Interface Files</Filter>
+    </ClCompile>
+    <ClCompile Include="config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

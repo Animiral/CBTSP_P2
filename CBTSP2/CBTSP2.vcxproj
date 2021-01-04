@@ -143,8 +143,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="aco.ixx" />
+    <ClCompile Include="cbtsp.cpp" />
     <ClCompile Include="cbtsp.ixx" />
+    <ClCompile Include="config.cpp" />
+    <ClCompile Include="config.ixx" />
+    <ClCompile Include="construction.cpp" />
+    <ClCompile Include="construction.ixx" />
+    <ClCompile Include="grasp.ixx" />
+    <ClCompile Include="local.cpp" />
+    <ClCompile Include="local.ixx" />
+    <ClCompile Include="grasp.cpp" />
+    <ClCompile Include="statistics.cpp" />
+    <ClCompile Include="statistics.ixx" />
+    <ClCompile Include="util.cpp" />
     <ClCompile Include="util.ixx" />
+    <ClCompile Include="vnd.ixx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
