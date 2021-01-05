@@ -7,6 +7,8 @@ module;
 #include <sstream>
 #include <numeric>
 #include <algorithm>
+#include <ranges>
+#include <functional>
 #include <cassert>
 
 module cbtsp;
@@ -61,6 +63,32 @@ Value Problem::value(Vertex start, Vertex end) const
     }
 
     return big_m_;
+}
+
+void Problem::calculateBigM()
+{
+    // There must be enough edges in the problem, otherwise we simply refuse to do anything
+    if (vertices_ > edges_.size())
+        return;
+
+    // 1. estimate theoretical min-valued and max-valued solution by assuming extreme edges
+    auto values = std::ranges::transform_view(edges_, [](Edge e) { return e.value; });
+    std::vector<Value> lowEdges(vertices_);
+    std::vector<Value> highEdges(vertices_);
+    std::ranges::partial_sort_copy(values, lowEdges, std::less<Value>{});
+    std::ranges::partial_sort_copy(values, highEdges, std::greater<Value>{});
+    const Value low = std::accumulate(lowEdges.begin(), lowEdges.end(), Value{});
+    const Value high = std::accumulate(highEdges.begin(), highEdges.end(), Value{});
+
+    // 2. are we creating positive or negative big-M? aim to go from less to more extreme
+    if (-low < high) {
+        // 3. replace the highest-value edge from the low solution with big-M -> must exceed high
+        big_m_ = high - low + lowEdges.back() + 1;
+    }
+    else {
+        // 3. replace the lowest-value edge from the high solution with big-M -> must exceed low
+        big_m_ = low - high + highEdges.back() - 1;
+    }
 }
 
 Problem Problem::fromText(std::string text)

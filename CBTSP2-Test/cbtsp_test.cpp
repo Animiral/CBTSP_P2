@@ -35,6 +35,16 @@ protected:
 
 };
 
+// Ensure that the problem's big-M is properly calculated.
+TEST_F(CbtspFixture, BigM)
+{
+    EXPECT_EQ(11, problem.bigM());
+    EXPECT_EQ(11, problem.value(1, 3));
+    problem.calculateBigM();
+    EXPECT_EQ(10,  problem.bigM());
+    EXPECT_EQ(10, problem.value(3, 1));
+}
+
 // Ensure that the objective value of the solution is
 // correctly computed from the sum of edge values.
 TEST_F(CbtspFixture, SolutionObjective)
