@@ -2,11 +2,13 @@
 #include <filesystem>
 #include <fstream>
 #include <streambuf>
+#include <ios>
 #include <string>
 
 import cbtsp;
 import config;
 import statistics;
+import util;
 
 // Read a problem input file
 std::string readFile(std::filesystem::path filePath)
@@ -15,7 +17,7 @@ std::string readFile(std::filesystem::path filePath)
     std::string contents;
 
     stream.seekg(0, std::ios::end);
-    contents.reserve(stream.tellg());
+    contents.reserve(narrow_cast<std::size_t>(static_cast<std::streamoff>(stream.tellg())));
     stream.seekg(0, std::ios::beg);
 
     contents.assign((std::istreambuf_iterator<char>(stream)),

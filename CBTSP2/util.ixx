@@ -4,6 +4,8 @@
 module;
 
 #include <string>
+#include <type_traits>
+#include <stdexcept>
 
 export module util;
 
@@ -22,4 +24,18 @@ std::string format(std::string fmt, Arg arg, Args... args)
     else {
         return fmt;
     }
+}
+
+/**
+ * Checking narrowing cast for integer types from The C++ Programming Language 11.5.
+ */
+export template<class Target, class Source>
+requires std::is_integral_v<Target> && std::is_integral_v<Source>
+Target narrow_cast(Source v)
+{
+    auto r = static_cast<Target>(v);
+    if (static_cast<Source>(r) != v)
+        throw std::domain_error(format("narrow_cast({}) failed.", v));
+
+    return r;
 }
