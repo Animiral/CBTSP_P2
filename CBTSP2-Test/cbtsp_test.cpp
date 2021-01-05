@@ -17,55 +17,59 @@ TEST(Cbtsp, FromText)
     EXPECT_EQ(3, problem.value(2, 1));
 }
 
-// Ensure that the problem's big-M is properly calculated.
-TEST(Cbtsp, BigM)
+class CbtspFixture : public ::testing::Test
 {
-    auto problem = Problem(4ull);
-    problem.addEdge({ 0, 1, 1 });
-    problem.addEdge({ 1, 2, 3 });
-    problem.addEdge({ 2, 3, -1 });
-    problem.addEdge({ 3, 0, -4 });
-    problem.addEdge({ 0, 2, 0 });
-    EXPECT_EQ(10, problem.bigM());
-    EXPECT_EQ(10, problem.value(1, 3));
-    problem.calculateBigM();
-    EXPECT_EQ(8, problem.bigM());
-    EXPECT_EQ(8, problem.value(3, 1));
-}
 
-//def setUp(self) :
-//    self.instance = Instance(4)
-//    self.instance.add_edge(Edge(0, 1, 1))
-//    self.instance.add_edge(Edge(0, 2, -1))
-//    self.instance.add_edge(Edge(1, 2, 3))
-//    self.instance.add_edge(Edge(2, 3, 5))
-//    self.instance.add_edge(Edge(3, 0, 0))
+protected:
 
-// Ensure that the value of the solution is correctly computed from the sum of edge values.
-TEST(Cbtsp, SolutionValue)
+    Problem problem;
+
+    CbtspFixture() : problem(4ull)
+    {
+        problem.addEdge({ 0, 1, 1 });
+        problem.addEdge({ 0, 2, -1 });
+        problem.addEdge({ 1, 2, 3 });
+        problem.addEdge({ 2, 3, 5 });
+        problem.addEdge({ 3, 0, 0 });
+    }
+
+};
+
+// Ensure that the objective value of the solution is
+// correctly computed from the sum of edge values.
+TEST_F(CbtspFixture, SolutionObjective)
 {
-    //solution = Solution(self.instance, [0, 1, 2])
-    //self.assertEqual(3, solution.value)
-}
-
-// Ensure that the the solution is correctly normalized.
-TEST(Cbtsp, Normalize)
-{
-    //solution = Solution(self.instance, [3, 2, 1])
-    //self.assertEqual([1, 2, 3], solution.normalized().vertices)
+    auto solution = Solution(problem, { 0, 1, 2 });
+    EXPECT_EQ(3, solution.objective());
 }
 
 // Ensure that the string representation of the solution is as expected.
-TEST(Cbtsp, SolutionString)
+TEST_F(CbtspFixture, SolutionString)
 {
-    //solution = Solution(self.instance, [3, 0, 1])
-    //self.assertEqual("3 0 1", str(solution))
+    auto solution = Solution(problem, { 3, 0, 1 });
+    EXPECT_EQ("3 0 1", solution.representation());
+}
+
+// Ensure that the the twoOpt move works.
+TEST_F(CbtspFixture, TwoOpt)
+{
+    auto solution = Solution(problem, { 0, 1, 2, 3 });
+    solution.twoOpt(2, 0);
+    EXPECT_EQ("1 0 2 3", solution.representation());
+}
+
+// Ensure that the the solution is correctly normalized.
+TEST_F(CbtspFixture, Normalize)
+{
+    auto solution = Solution(problem, { 3, 2, 1 });
+    solution.normalize();
+    EXPECT_EQ("1 2 3", solution.representation());
 }
 
 // Test the feasibility evaluation.
-TEST(Cbtsp, IsFeasible)
+TEST_F(CbtspFixture, IsFeasible)
 {
-    //self.assertTrue(Solution(self.instance, [0, 1, 2, 3]).is_feasible())
-    //self.assertFalse(Solution(self.instance, [3, 0, 1]).is_feasible())
-    //self.assertFalse(Solution(self.instance, [0, 2, 3, 1]).is_feasible())
+    EXPECT_TRUE(Solution(problem, { 0, 1, 2, 3 }).isFeasible());
+    EXPECT_FALSE(Solution(problem, { 3, 0, 1 }).isFeasible());
+    EXPECT_FALSE(Solution(problem, { 0, 2, 3, 1 }).isFeasible());
 }

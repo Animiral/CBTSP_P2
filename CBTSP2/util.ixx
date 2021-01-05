@@ -17,7 +17,7 @@ export template<typename Arg, typename ...Args>
 std::string format(std::string fmt, Arg arg, Args... args)
 {
     if (auto index = fmt.find("{}", 0); index != std::string::npos) {
-        return fmt.substr(0, index) + std::to_string(arg) + format(fmt.substr(index + 2, args...));
+        return fmt.substr(0, index) + std::to_string(arg) + format(fmt.substr(index + 2), args...);
     }
     else {
         return fmt;

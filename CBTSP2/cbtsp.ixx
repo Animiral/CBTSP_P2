@@ -146,6 +146,9 @@ public:
 
     /**
      * Perform a two-edge exchange move operation on the solution to arrive at a different solution.
+     *
+     * @param v1: the first edge to exchange is the edge leading to the vertex at this index
+     * @param v2: the second edge to exchange is the edge leading to the vertex at this index
      */
     void twoOpt(size_t v1, size_t v2);
 

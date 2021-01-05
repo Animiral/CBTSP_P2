@@ -4,6 +4,10 @@ module;
 #include <string>
 #include <cmath>
 #include <limits>
+#include <sstream>
+#include <numeric>
+#include <algorithm>
+#include <cassert>
 
 module cbtsp;
 
@@ -48,6 +52,9 @@ void Problem::addEdge(Edge edge)
 
 Value Problem::value(Vertex start, Vertex end) const
 {
+    assert(start < vertices_);
+    assert(end < vertices_);
+
     for (const auto& e : edges_) {
         if ((e.a == start && e.b == end) || (e.b == start && e.a == end))
             return e.value;
@@ -56,45 +63,43 @@ Value Problem::value(Vertex start, Vertex end) const
     return big_m_;
 }
 
-void Problem::calculateBigM()
-{
-    // TODO: translate from Python using std::partial_sort.
-    //       Also, there might be a validity problem with this calculation.
-
-    //import heapq
-    //values = [e.value for e in self.edges]
-    //min_edges = heapq.nsmallest(self.vertices, values)
-    //max_edges = heapq.nlargest(self.vertices, values)
-    //self.big_m = sum(max_edges) - sum(min_edges) + 1
-}
-
 Problem Problem::fromText(std::string text)
 {
-    //auto stream = std::istringstream{ text };
-    // TODO: translate from Python
-    //import re
+    auto stream = std::istringstream{ text };
 
-    //    raw_tokens = filter(lambda t : len(t) > 0, re.split('[ \n]+', text))
-    //    raw_numbers = [int(sn) for sn in raw_tokens]
+    std::size_t vertices = 0;
+    std::size_t edges = 0;
 
-    //    if len(raw_numbers) < 2:
-    //raise RuntimeError("An instance must specify the number of vertices and edges.")
+    if (stream) stream >> vertices;
+    if (stream) stream >> edges;
 
-    //    vertices = raw_numbers[0]
-    //    edges = raw_numbers[1]
+    if (!stream)
+        throw std::runtime_error("An instance must specify the number of vertices and edges.");
 
-    //    if len(raw_numbers) != 2 + edges * 3:
-    //raise RuntimeError("The instance must contain exactly {} edges.".format(edges))
+    auto problem = Problem{ vertices };
 
-    //    instance = Instance(vertices)
+    for (std::size_t i = 0; i < edges; i++) {
+        Vertex a; // first node in the edge
+        Vertex b; // second node in the edge
+        Value value; // value added to the solution that contains this edge
 
-    //    for i in range(edges) :
-    //        a, b, v = raw_numbers[2 + i * 3:2 + i * 3 + 3]
-    //        instance.add_edge(Edge(a, b, v))
+        if (stream) stream >> a;
+        if (stream) stream >> b;
+        if (stream) stream >> value;
 
-    //        # instance.calculate_big_m()
-    //        return instance
-    return Problem{ 3 };
+        if (!stream)
+            throw std::runtime_error(format("Failed to read edge {}.", i));
+
+        if (a >= vertices)
+            throw std::out_of_range(format("From-vertex in edge {} is out of range: {} (>= {}).", i, a, vertices));
+
+        if (b >= vertices)
+            throw std::out_of_range(format("To-vertex in edge {} is out of range: {} (>= {}).", i, b, vertices));
+
+        problem.addEdge({ a, b, value });
+    }
+
+    return problem;
 }
 
 Solution::Solution(const Problem& problem, std::vector<Vertex>&& vertices)
@@ -110,8 +115,18 @@ Solution::Solution(const Problem& problem, std::vector<Vertex>&& vertices, Value
 
 std::string Solution::representation() const
 {
-    return ""; // TODO: translate Python
-    //return " ".join(str(v) for v in self.vertices)
+    if (vertices_.empty())
+        return {};
+
+    auto appendVertex = [](std::string s, Vertex v)
+    {
+        s.append(" ");
+        s.append(std::to_string(v));
+        return s;
+    };
+
+    return std::accumulate(++vertices_.begin(), vertices_.end(),
+        std::to_string(vertices_.front()), appendVertex);
 }
 
 Value Solution::objective() const noexcept
@@ -126,56 +141,65 @@ bool Solution::isPartial() const noexcept
 
 bool Solution::isFeasible() const
 {
-    return false; // TODO: translate Python
-    //if self.is_partial() :
-    //    return False
+    if (isPartial())
+        return false;
 
-    //    for i in range(len(self.vertices)) :
-    //        if self.instance.value(self.vertices[i - 1], self.vertices[i]) == self.instance.big_m :
-    //            return False
-    //        else :
-    //            return True
+    Vertex pre = vertices_.back();
+
+    for (auto it = vertices_.cbegin(); it != vertices_.cend(); ++it) {
+        if (problem_->value(pre, *it) >= problem_->bigM())
+            return false;
+
+        pre = *it;
+    }
+
+    return true;
 }
 
 void Solution::twoOpt(size_t v1, size_t v2)
 {
-    // TODO: implement
+    assert(v1 < vertices_.size());
+    assert(v2 < vertices_.size());
+
+    auto [low, high] = std::minmax(v1, v2);
+    std::reverse(vertices_.begin() + low, vertices_.begin() + high);
 }
 
 void Solution::normalize()
 {
-    //n = len(self.vertices)
-    //if n < 2 :
-    //    return self
+    auto n = vertices_.size();
+    if (n < 2)
+        return; // single-vertex solutions are always normal
 
-    //    start = min(range(n), key = self.vertices.__getitem__)
-    //    reverse = self.vertices[(start + 1) % n] > self.vertices[start - 1]
+    const auto begin = vertices_.begin();
+    const auto end = vertices_.end();
+    std::size_t start = std::min_element(begin, end) - begin;
+    bool reverse = vertices_[(start + 1) % n] > vertices_[(start + n - 1) % n];
 
-    //    if 0 == start and not reverse:
-    //        return self
+    if (0 == start && !reverse)
+        return; // already normal
 
-    //if reverse :
-    //    normal_vertices = self.vertices[(start + 1) % n:] + self.vertices[:(start + 1) % n]
-    //    normal_vertices.reverse()
-    //else:
-    //    normal_vertices = self.vertices[start:] + self.vertices[:start]
-
-    //return Solution(self.instance, normal_vertices)
+    if (reverse) {
+        std::rotate(begin, begin + (start + 1), end);
+        std::reverse(begin, end);
+    }
+    else {
+        std::rotate(begin, begin + start, end);
+    }
 }
 
 Value Solution::calculateValue()
 {
-    return 0; // TODO: translate Python
-    //if len(self.vertices) <= 1 :
-    //    return 0
+    if (vertices_.empty())
+        return 0;
 
-    //    total = 0
-    //    pre = self.vertices[-1]
+    Vertex pre = vertices_.back();
+    Value total = 0;
 
-    //    for v in self.vertices:
-    //        value = self.instance.value(pre, v)
-    //total += value
-    //pre = v
+    for (auto it = vertices_.cbegin(); it != vertices_.cend(); ++it) {
+        total += problem_->value(pre, *it);
+        pre = *it;
+    }
 
-    //return total
+    return total;
 }
