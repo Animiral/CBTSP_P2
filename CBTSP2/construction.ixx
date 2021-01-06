@@ -11,6 +11,12 @@ export module construction;
 export import cbtsp;
 
 /**
+ * Calculate the set of vertices in the problem which are available
+ * to the selection strategy, i.e. all those not yet part of the solution.
+ */
+std::vector<Vertex> selectables(const Problem& problem, const Solution& partialSolution);
+
+/**
  * Random selection strategy.
  *
  * The next vertex which is not part of the solution is chosen at random according to the given RNG.
@@ -37,9 +43,9 @@ public:
      */
     Vertex select(const Problem& problem, const Solution& partialSolution)
     {
-        return 0; // TODO: translate Python
-        //candidates = [v for v in range(instance.vertices) if v not in partial_solution.vertices]
-        //return self.random.choice(candidates)
+        const auto selectable = selectables(problem, partialSolution);
+        const auto distribution = std::uniform_int_distribution{ 0ull, selectable.size() - 1 };
+        return selectable[distribution(rng_)];
     }
 
 private:
@@ -80,14 +86,13 @@ export class BestTourInserter
 public:
 
     /**
-     * Create a new solution from the partial solution by adding the next vertex in the best - value place.
+     * Add the next vertex to the partial solution in the best - value place.
      *
      * @param problem: problem instance object
-     * @param partialSolution: partial Solution object
+     * @param partialSolution: partial Solution object to modify
      * @param nextVertex: vertex number
-     * @return: a Solution object with a tour including the next vertex
      */
-    Solution insert(const Problem& problem, const Solution& partialSolution, Vertex nextVertex) const;
+    void insert(const Problem& problem, Solution& partialSolution, Vertex nextVertex) const;
 
 private:
 
@@ -95,12 +100,12 @@ private:
      * Determine the value of the tour which results from inserting the next vertex at the specified spot in the tour.
      *
      * @param problem: problem instance object
-     * @param partialSolution: partial Solution object
+     * @param partialSolution: partial Solution object, state restored after experiment
      * @param nextVertex: vertex number
-     * @param where: index before which to insert the next vertex in the tour
+     * @param pos: index before which to insert the next vertex in the tour
      * @return: the value of the resulting tour
      */
-    Value tourValue(const Problem& problem, const Solution& partialSolution, Vertex nextVertex, std::size_t where);
+    static Value tourObjective(const Problem& problem, Solution& partialSolution, Vertex nextVertex, std::size_t pos);
 
 };
 
@@ -122,7 +127,7 @@ public:
     * @param selector: selection strategy
     * @param inserter: insertion strategy
      */
-    explicit Construction(SelectionStrategy&& selector, BestTourInserter&& inserter) noexcept
+    explicit Construction(SelectionStrategy selector, BestTourInserter inserter) noexcept
         : selector_(selector), inserter_(inserter)
     {
     }
@@ -135,14 +140,13 @@ public:
      */
     Solution construct(const Problem& problem)
     {
-        std::vector<Vertex> vs;
-        return Solution{ problem, move(vs) }; // TODO: translate Python
-        //partial_solution = Solution(instance, [])
-        //for i in range(instance.vertices) :
-        //    next_vertex = self.selector.select(instance, partial_solution)
-        //    partial_solution = self.inserter.insert(instance, partial_solution, next_vertex)
+        auto solution = Solution(problem, {});
+        for (std::size_t i = 0; i < problem.vertices(); i++) {
+            const Vertex next = selector_.select(problem, solution);
+            inserter_.insert(problem, solution, next);
+        }
 
-        //return partial_solution
+        return solution;
     }
 
 private:

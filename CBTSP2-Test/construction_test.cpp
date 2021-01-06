@@ -1,90 +1,127 @@
 // tests for construction heuristics
 #include "gtest/gtest.h"
+#include <algorithm>
+#include <random>
 
 import construction;
 
-//def setUp(self) :
-//    self.instance = Instance(5)
-//    self.instance.add_edge(Edge(0, 1, 1))
-//    self.instance.add_edge(Edge(1, 2, 2))
-//    self.instance.add_edge(Edge(2, 3, 3))
-//    self.instance.add_edge(Edge(3, 4, -1))
-//    self.instance.add_edge(Edge(4, 0, -2))
+class ConstructionTest : public ::testing::Test
+{
+
+protected:
+
+    Problem problem;
+
+    ConstructionTest() : problem(5ull)
+    {
+        problem.addEdge({ 0, 1, 1 });
+        problem.addEdge({ 1, 2, 2 });
+        problem.addEdge({ 2, 3, 3 });
+        problem.addEdge({ 3, 4, -1 });
+        problem.addEdge({ 4, 0, -2 });
+    }
+
+};
 
 // Ensure that vertex selection happens according to the RNG.
-TEST(Construction, SelectRandom)
+TEST_F(ConstructionTest, SelectRandom)
 {
-    //mock_random.choice = lambda sequence : sequence[1]
-    //selector = RandomSelector(mock_random)
-    //partial_solution = Solution(self.instance, [0, 2])
-    //self.assertEqual(3, selector.select(self.instance, partial_solution))
+    struct
+    {
+        using result_type = unsigned int;
+        static result_type min() { return 0; }
+        static result_type max() { return 1000; }
+        result_type operator()() { return 4; } // chosen by fair dice roll. guaranteed to be random.
+    } mockRng;
+    auto selector = RandomSelector(mockRng);
+    auto partialSolution = Solution(problem, { 0, 2 });
+    Vertex availables[] = { 1, 3, 4 };
+
+    auto selection = selector.select(problem, partialSolution);
+    EXPECT_NE(availables + 3, std::find(availables, availables + 3, selection));
+    partialSolution.insert(2, selection);
+    EXPECT_EQ(availables + 2, std::remove(availables, availables + 3, selection));
+
+    selection = selector.select(problem, partialSolution);
+    EXPECT_NE(availables + 2, std::find(availables, availables + 2, selection));
+    partialSolution.insert(3, selection);
+    EXPECT_EQ(availables + 1, std::remove(availables, availables + 2, selection));
+
+    selection = selector.select(problem, partialSolution);
+    EXPECT_EQ(availables[0] , selection);
 }
 
 // Ensure that the farthest vertex is always selected.
-TEST(Construction, SelectFarthestCity)
+TEST_F(ConstructionTest, SelectFarthestCity)
 {
-    //selector = FarthestCitySelector()
-    //self.assertEqual(0, selector.select(self.instance, Solution(self.instance, [])))
-    //self.assertEqual(4, selector.select(self.instance, Solution(self.instance, [1, 2])))
-    //self.assertEqual(3, selector.select(self.instance, Solution(self.instance, [0, 2])))
-    //self.assertEqual(2, selector.select(self.instance, Solution(self.instance, [0, 3, 4])))
+    auto selector = FarthestCitySelector();
+    EXPECT_EQ(0, selector.select(problem, Solution(problem, {})));
+    EXPECT_EQ(3, selector.select(problem, Solution(problem, { 1, 2 })));
+    EXPECT_EQ(3, selector.select(problem, Solution(problem, { 0, 2 })));
+    EXPECT_EQ(2, selector.select(problem, Solution(problem, { 0, 3, 4 })));
 }
 
 // Ensure that inserting places the new vertex at the best spot in the tour.
-TEST(Construction, BestTourInserter)
+TEST_F(ConstructionTest, BestTourInserter)
 {
-    //inserter = BestTourInserter()
-    //partial_solution = Solution(self.instance, [0, 2, 4])
-    //next_solution = inserter.insert(self.instance, partial_solution, 3)
-    //self.assertEqual([0, 2, 3, 4], next_solution.vertices)
+    auto inserter = BestTourInserter();
+    auto partialSolution = Solution(problem, { 0, 2, 4 });
+    inserter.insert(problem, partialSolution, 3);
+    EXPECT_EQ("0 2 3 4", partialSolution.representation());
 }
 
 // Ensure that random construction results in a full-length solution.
-TEST(Construction, ConstructRandom)
+TEST_F(ConstructionTest, ConstructRandom)
 {
-    //selector = RandomSelector(Random())
-    //inserter = BestTourInserter()
-    //construction = Construction(selector, inserter)
-    //solution = construction(self.instance)
-    //self.assertEqual(5, len(solution.vertices))
+    auto selector = RandomSelector(std::default_random_engine{});
+    auto inserter = BestTourInserter();
+    auto construction = Construction(selector, inserter);
+    auto solution = construction.construct(problem);
+    EXPECT_FALSE(solution.isPartial());
 }
 
 // Ensure that deterministic construction results in a full-length solution.
-TEST(Construction, ConstructDeterministic)
+TEST_F(ConstructionTest, ConstructDeterministic)
 {
-    //selector = FarthestCitySelector()
-    //inserter = BestTourInserter()
-    //construction = Construction(selector, inserter)
-    //solution = construction(self.instance)
-    //# 0
-    //# 2 0
-    //# 3 2 0
-    //# 3 2 1 0
-    //# 4 3 2 1 0
-    //self.assertEqual([4, 3, 2, 1, 0], solution.vertices)
+    auto selector = FarthestCitySelector();
+    auto inserter = BestTourInserter();
+    auto construction = Construction(selector, inserter);
+    auto solution = construction.construct(problem);
+    // 0
+    // 4 0
+    // 1 4 0
+    // 1 2 4 0
+    // 1 2 3 4 0
+    EXPECT_EQ("1 2 3 4 0", solution.representation());
 }
 
 // Ensure that in construction, the selector determines the cities from the beginning.
-TEST(Construction, InitialCitySelection)
+TEST_F(ConstructionTest, InitialCitySelection)
 {
-    //count = 0
+    int count = 0;
 
-    //def select_mock(_, solution) :
-    //    nonlocal count
-    //    count = count + 1
-    //    if count == 1 :
-    //        self.assertEqual([], solution.vertices)
-    //        return 0
-    //        elif count == 2 :
-    //        self.assertEqual([0], solution.vertices)
-    //        return 1
-    //    else:
-    //        return count - 1
+    struct MockSelector
+    {
+        MockSelector(int& count) : count_(count) {}
+        int& count_;
+        Vertex select(const Problem& problem, const Solution& partialSolution)
+        {
+            count_++;
+            switch (count_) {
+            case 1:
+                EXPECT_EQ("", partialSolution.representation());
+                return 0;
+            case 2:
+                EXPECT_EQ("0", partialSolution.representation());
+                return 1;
+            default:
+                return count_ - 1;
+            }
+        }
+    } mockSelector(count);
 
-    //selector = mock.Mock()
-    //selector.select = mock.Mock(side_effect = select_mock)
-    //inserter = BestTourInserter()
-    //construction = Construction(selector, inserter)
-    //construction(self.instance)
-    //self.assertGreater(count, 2)
+    auto inserter = BestTourInserter();
+    auto construction = Construction(mockSelector, inserter);
+    construction.construct(problem);
+    EXPECT_GT(count, 2);
 }
