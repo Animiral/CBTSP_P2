@@ -123,12 +123,33 @@ public:
     std::string representation() const;
 
     /**
-     * Return the objective value of this solution, which can be compared for quality against other solutions.
+     * Get the vector which stores the solution tour.
+     *
+     * @return: stored tour
+     */
+    const std::vector<Vertex>& vertices() const noexcept;
+
+    /**
+     * Get the tour value of this solution.
+     *
+     * @return: stored tour value
+     */
+    Value value() const noexcept;
+
+    /**
+     * Get the objective value of this solution, which can be compared for quality against other solutions.
      * In search, this should be minimized.
      *
      * @return: objective value
      */
     Value objective() const noexcept;
+
+    /**
+     * Get the tour length of the solution.
+     *
+     * @return: length of the stored tour
+     */
+    std::size_t length() const noexcept;
 
     /**
      * A solution is partial or incomplete if it does not visit every vertex in the instance.
@@ -145,12 +166,20 @@ public:
     bool isFeasible() const;
 
     /**
+     * Extend the solution by including an additional vertex at the specified position.
+     *
+     * @param pos: the index before which to insert the new vertex among the existing vertices
+     * @param vertex: the new vertex value
+     */
+    void insert(std::size_t pos, Vertex vertex);
+
+    /**
      * Perform a two-edge exchange move operation on the solution to arrive at a different solution.
      *
      * @param v1: the first edge to exchange is the edge leading to the vertex at this index
      * @param v2: the second edge to exchange is the edge leading to the vertex at this index
      */
-    void twoOpt(size_t v1, size_t v2);
+    void twoOpt(std::size_t v1, std::size_t v2);
 
     /**
      * Change this solution into its normalized variant.

@@ -133,12 +133,14 @@ Problem Problem::fromText(std::string text)
 Solution::Solution(const Problem& problem, std::vector<Vertex>&& vertices)
     : problem_(&problem), vertices_(vertices)
 {
+    vertices_.reserve(problem_->vertices());
     value_ = calculateValue();
 }
 
 Solution::Solution(const Problem& problem, std::vector<Vertex>&& vertices, Value value)
     : problem_(&problem), vertices_(vertices), value_(value)
 {
+    vertices_.reserve(problem_->vertices());
 }
 
 std::string Solution::representation() const
@@ -157,9 +159,24 @@ std::string Solution::representation() const
         std::to_string(vertices_.front()), appendVertex);
 }
 
+const std::vector<Vertex>& Solution::vertices() const noexcept
+{
+    return vertices_;
+}
+
+Value Solution::value() const noexcept
+{
+    return value_;
+}
+
 Value Solution::objective() const noexcept
 {
     return std::abs(value_);
+}
+
+std::size_t Solution::length() const noexcept
+{
+    return vertices_.size();
 }
 
 bool Solution::isPartial() const noexcept
@@ -184,12 +201,40 @@ bool Solution::isFeasible() const
     return true;
 }
 
-void Solution::twoOpt(size_t v1, size_t v2)
+void Solution::insert(std::size_t pos, Vertex vertex)
+{
+    assert(pos <= vertices_.size());
+
+    // delta-update solution value
+    const std::size_t n = vertices_.size();
+    if (1 == n) {
+        value_ = 2 * problem_->value(vertices_[0], vertex);
+    }
+    else if (1 < n) {
+        const Vertex prev = vertices_[(pos + n - 1) % n];
+        const Vertex next = vertices_[pos % n];
+        value_ += problem_->value(prev, vertex) + problem_->value(vertex, next) - problem_->value(prev, next);
+    }
+
+    vertices_.insert(vertices_.begin() + pos, vertex);
+}
+
+void Solution::twoOpt(std::size_t v1, std::size_t v2)
 {
     assert(v1 < vertices_.size());
     assert(v2 < vertices_.size());
 
     auto [low, high] = std::minmax(v1, v2);
+
+    // delta-update solution value
+    const std::size_t n = vertices_.size();
+    Vertex prev1 = vertices_[(low + n - 1) % n];
+    Vertex next1 = vertices_[low];
+    Vertex prev2 = vertices_[(high + n - 1) % n];
+    Vertex next2 = vertices_[high];
+    value_ += problem_->value(prev1, next2) + problem_->value(prev2, next1)
+        - problem_->value(prev1, next1) - problem_->value(prev2, next2);
+
     std::reverse(vertices_.begin() + low, vertices_.begin() + high);
 }
 
@@ -218,7 +263,7 @@ void Solution::normalize()
 
 Value Solution::calculateValue()
 {
-    if (vertices_.empty())
+    if (vertices_.size() < 2)
         return 0;
 
     Vertex pre = vertices_.back();
