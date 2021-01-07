@@ -1,5 +1,6 @@
 module;
 
+#include <memory>
 #include <utility>
 
 module grasp;
@@ -9,27 +10,30 @@ AfterIterations::AfterIterations(int iterations) noexcept
 {
 }
 
-bool AfterIterations::doneAfter(const Solution& ) noexcept
+bool AfterIterations::done() noexcept
 {
     return iterations_-- <= 0;
 }
 
-Grasp::Grasp(RandomConstruction&& construction, LocalSearch&& localSearch, AfterIterations doTerminate) noexcept
-    : construction_(construction), localSearch_(std::move(localSearch)), doTerminate_(doTerminate)
+Grasp::Grasp(std::unique_ptr<Construction> construction, LocalSearch&& localSearch, AfterIterations doTerminate) noexcept
+    : construction_(move(construction)), localSearch_(std::move(localSearch)), doTerminate_(doTerminate)
 {
 }
 
 Solution Grasp::search(const Problem& problem)
 {
-    std::vector<Vertex> vs;
-    return Solution{ problem, move(vs) }; // TODO: translate Python
-//solution = self.search(self.construction(instance))
-//solution_objective = self.objective(solution)
-//while not self.done(self, solution) :
-//    candidate = self.search(self.construction(instance))
-//    candidate_objective = self.objective(candidate)
-//    if candidate_objective < solution_objective :
-//        solution = candidate
+    Solution solution{ problem, {} };
 
-//return solution
+    if (!doTerminate_.done()) {
+        solution = localSearch_.search(construction_->construct(problem));
+    }
+
+    while (!doTerminate_.done()) {
+        Solution candidate = localSearch_.search(construction_->construct(problem));
+        if (candidate.objective() < solution.objective()) {
+            solution = std::move(candidate);
+        }
+    }
+
+    return solution;
 }

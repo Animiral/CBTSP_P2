@@ -6,6 +6,10 @@
  * returns a feasible solution of some reasonable quality (local optimum).
  * These building blocks are defined in the separate "local" module.
  */
+module;
+
+#include <memory>
+
 export module grasp;
 
 import cbtsp;
@@ -32,7 +36,7 @@ public:
      *
      * @return: true if the configured number of iterations has passed, false otherwise
      */
-    bool doneAfter(const Solution& ) noexcept;
+    bool done() noexcept;
 
 private:
 
@@ -51,11 +55,11 @@ public:
     /**
      * Construct the search.
      *
-     * @param construction: randomized construction heuristic
+     * @param construction: construction heuristic, must be randomized
      * @param localSearch: local search algorithm
      * @param doTerminate: predicate to decide when to terminate the search
      */
-    explicit Grasp(RandomConstruction&& construction, LocalSearch&& localSearch, AfterIterations doTerminate) noexcept;
+    explicit Grasp(std::unique_ptr<Construction> construction, LocalSearch&& localSearch, AfterIterations doTerminate) noexcept;
 
     /**
      * Execute the GRASP search scheme for the given problem.
@@ -67,7 +71,7 @@ public:
 
 private:
 
-    RandomConstruction construction_;
+    std::unique_ptr<Construction> construction_;
     LocalSearch localSearch_;
     AfterIterations doTerminate_;
 
