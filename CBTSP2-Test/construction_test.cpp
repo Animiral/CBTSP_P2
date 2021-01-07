@@ -75,7 +75,7 @@ TEST_F(ConstructionTest, ConstructRandom)
 {
     auto selector = RandomSelector(std::default_random_engine{});
     auto inserter = BestTourInserter();
-    auto construction = Construction(selector, inserter);
+    auto construction = RandomConstruction(selector, inserter);
     auto solution = construction.construct(problem);
     EXPECT_FALSE(solution.isPartial());
 }
@@ -85,7 +85,7 @@ TEST_F(ConstructionTest, ConstructDeterministic)
 {
     auto selector = FarthestCitySelector();
     auto inserter = BestTourInserter();
-    auto construction = Construction(selector, inserter);
+    auto construction = DeterministicConstruction(selector, inserter);
     auto solution = construction.construct(problem);
     // 0
     // 4 0
@@ -121,7 +121,7 @@ TEST_F(ConstructionTest, InitialCitySelection)
     } mockSelector(count);
 
     auto inserter = BestTourInserter();
-    auto construction = Construction(mockSelector, inserter);
+    auto construction = SelectInsertConstruction(mockSelector, inserter);
     construction.construct(problem);
     EXPECT_GT(count, 2);
 }

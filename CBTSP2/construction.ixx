@@ -110,13 +110,33 @@ private:
 };
 
 /**
- *
+ * A Construction is a heuristic that can create an initial full -
+ * not necessarily feasible or optimal - solution for a given problem instance.
+ */
+export class Construction
+{
+
+public:
+
+    virtual ~Construction() noexcept = default;
+
+    /**
+     * Construct a solution using the heuristic implementation.
+     *
+     * @param problem: problem instance object
+     * @return: a full - length Solution object
+     */
+    virtual Solution construct(const Problem& problem) = 0;
+
+};
+
+/**
  * Constructs a full - length CBTSP solution based on a selection strategy and an insertion strategy.
  *
  * The selection strategy specifies the next vertex to be added to the tour.
  * The insertion strategy defines where the next vertex should be inserted in the partial solution.
  */
-export template<typename SelectionStrategy> class Construction
+export template<typename SelectionStrategy> class SelectInsertConstruction : public Construction
 {
 
 public:
@@ -127,8 +147,8 @@ public:
     * @param selector: selection strategy
     * @param inserter: insertion strategy
      */
-    explicit Construction(SelectionStrategy selector, BestTourInserter inserter) noexcept
-        : selector_(selector), inserter_(inserter)
+    explicit SelectInsertConstruction(SelectionStrategy selector, BestTourInserter inserter) noexcept
+        : Construction(), selector_(selector), inserter_(inserter)
     {
     }
 
@@ -138,7 +158,7 @@ public:
      * @param problem: problem instance object
      * @return: a full - length Solution object
      */
-    Solution construct(const Problem& problem)
+    Solution construct(const Problem& problem) override
     {
         auto solution = Solution(problem, {});
         for (std::size_t i = 0; i < problem.vertices(); i++) {
@@ -156,5 +176,5 @@ private:
 
 };
 
-export using RandomConstruction = Construction<RandomSelector<std::default_random_engine>>;
-export using DeterministicConstruction = Construction<FarthestCitySelector>;
+export using RandomConstruction = SelectInsertConstruction<RandomSelector<std::default_random_engine>>;
+export using DeterministicConstruction = SelectInsertConstruction<FarthestCitySelector>;
