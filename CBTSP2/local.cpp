@@ -1,173 +1,181 @@
 module;
 
 #include <limits>
+#include <memory>
 #include <utility>
 
 module local;
 
-Neighborhood::Neighborhood(Solution&& base) noexcept
-    : solution_(base)
+Neighborhood::Neighborhood(std::size_t vertices) noexcept
+    : vertices_(vertices)
 {
 }
 
-Neighborhood::Neighborhood(const Neighborhood& rhs)
-    : solution_(rhs.solution_)
+Solution Neighborhood::applyCopy(const Solution& base) const
+{
+    Solution neighbor{ base };
+    apply(neighbor);
+    return neighbor;
+}
+
+TwoExchangeNeighborhood::TwoExchangeNeighborhood(std::size_t vertices) noexcept
+    : Neighborhood(vertices), cut1_(0), cut2_(2)
 {
 }
 
-Neighborhood::reference Neighborhood::operator*() const noexcept
-{
-    return solution_;
-}
+TwoExchangeNeighborhood::TwoExchangeNeighborhood(const TwoExchangeNeighborhood& rhs) = default;
 
-Neighborhood::pointer Neighborhood::operator->() const noexcept
+std::unique_ptr<Neighborhood> TwoExchangeNeighborhood::clone() const
 {
-    return &solution_;
-}
-
-TwoExchangeNeighborhood::TwoExchangeNeighborhood(Solution&& base) noexcept
-    : Neighborhood(std::move(base))
-{
-}
-
-TwoExchangeNeighborhood::TwoExchangeNeighborhood(const TwoExchangeNeighborhood& rhs)
-    : Neighborhood(rhs)
-{
+    return std::make_unique<TwoExchangeNeighborhood>(*this);
 }
 
 TwoExchangeNeighborhood& TwoExchangeNeighborhood::operator++()
 {
-    return *this; // TODO: translate Python
-//instance = base.instance
-//    n = len(base.vertices)
-//    for i in range(n - 2) : # first edge to cut is before vertex i
-//        for j in range(i + 2, n if i > 0 else n - 1) : # second edge to cut is before vertex j
-//            neighbor_vertices = base.vertices[:i]
-//            neighbor_vertices += reversed(base.vertices[i:j])
-//            neighbor_vertices += base.vertices[j:]
-//            i_pos = base.vertices[i]
-//            i_prev = base.vertices[i - 1]
-//            j_pos = base.vertices[j % n]
-//            j_prev = base.vertices[j - 1]
-//            neighbor_value = base.value - instance.value(i_prev, i_pos) - instance.value(j_prev, j_pos) + \
-//            instance.value(i_prev, j_prev) + instance.value(i_pos, j_pos)
-//            yield Solution(instance, neighbor_vertices, neighbor_value)
+    cut2_++;
+
+    if (cut2_ >= vertices_ - int(0 == cut1_)) {
+        cut1_++;
+        cut2_ = cut1_ + 2;
+    }
+
+    return *this;
 }
 
-NarrowTwoExchangeNeighborhood::NarrowTwoExchangeNeighborhood(Solution&& base) noexcept
-    : Neighborhood(std::move(base))
+Value TwoExchangeNeighborhood::objective(const Solution& base) const noexcept
+{
+    return std::abs(base.twoOptValue(cut1_, cut2_));
+}
+
+void TwoExchangeNeighborhood::apply(Solution& solution) const
+{
+    solution.twoOpt(cut1_, cut2_);
+}
+
+bool TwoExchangeNeighborhood::operator!=(std::default_sentinel_t) const noexcept
+{
+    return cut1_ < vertices_ - 2;
+}
+
+NarrowTwoExchangeNeighborhood::NarrowTwoExchangeNeighborhood(std::size_t vertices) noexcept
+    : Neighborhood(vertices), maxl_(std::max(vertices / 4, 3ull)), cut1_(0), cut2_(3)
 {
 }
 
-NarrowTwoExchangeNeighborhood::NarrowTwoExchangeNeighborhood(const NarrowTwoExchangeNeighborhood& rhs)
-    : Neighborhood(rhs)
+NarrowTwoExchangeNeighborhood::NarrowTwoExchangeNeighborhood(const NarrowTwoExchangeNeighborhood& rhs) = default;
+
+std::unique_ptr<Neighborhood> NarrowTwoExchangeNeighborhood::clone() const
 {
+    return std::make_unique<NarrowTwoExchangeNeighborhood>(*this);
 }
 
 NarrowTwoExchangeNeighborhood& NarrowTwoExchangeNeighborhood::operator++()
 {
-    return *this; // TODO: translate Python
-//instance = base.instance
-//n = len(base.vertices)
-//max_l = max(int(instance.vertices / 4), 3)  # smaller tour max length
-//
-//for i in range(-(max_l - 1), n - (max_l - 1)) :
-//    for j in range(i + 3, i + max_l + 1) :
-//        # cut the loop in two : first for cutting beyond the bounds of the array, then for inside bounds.
-//        if (i < 0) and (j >= 0) :
-//            neighbor_vertices = base.vertices[j:i]
-//            neighbor_vertices += reversed(base.vertices[i:] + base.vertices[:j])
-//            i_pos = base.vertices[i]
-//            i_prev = base.vertices[i - 1]
-//            j_pos = base.vertices[j % n]
-//            j_prev = base.vertices[j - 1]
-//            neighbor_value = base.value - instance.value(i_prev, i_pos) - instance.value(j_prev, j_pos) + \
-//                                instance.value(i_prev, j_prev) + instance.value(i_pos, j_pos)
-//            yield Solution(base.instance, neighbor_vertices, neighbor_value)
-//        else:
-//            neighbor_vertices = base.vertices[:i]
-//            neighbor_vertices += reversed(base.vertices[i:j])
-//            neighbor_vertices += base.vertices[j:]
-//            i_pos = base.vertices[i]
-//            i_prev = base.vertices[i - 1]
-//            j_pos = base.vertices[j % n]
-//            j_prev = base.vertices[j - 1]
-//            neighbor_value = base.value - instance.value(i_prev, i_pos) - instance.value(j_prev, j_pos) + \
-//                                instance.value(i_prev, j_prev) + instance.value(i_pos, j_pos)
-//            yield Solution(base.instance, neighbor_vertices, neighbor_value)
+    do {
+        cut2_++;
+
+        if (cut2_ >= vertices_) {
+            cut1_++;
+            cut2_ = cut1_ + 3;
+
+            if (cut1_ >= vertices_)
+                break;
+        }
+    } while ((cut2_ - cut1_ > maxl_ && cut1_ + vertices_ - cut2_ > maxl_) || cut1_ + vertices_ - cut2_ < 3);
+
+    return *this;
 }
 
-WideTwoExchangeNeighborhood::WideTwoExchangeNeighborhood(Solution&& base) noexcept
-    : Neighborhood(std::move(base))
+Value NarrowTwoExchangeNeighborhood::objective(const Solution& base) const noexcept
+{
+    return std::abs(base.twoOptValue(cut1_, cut2_));
+}
+
+void NarrowTwoExchangeNeighborhood::apply(Solution& solution) const
+{
+    solution.twoOpt(cut1_, cut2_);
+}
+
+bool NarrowTwoExchangeNeighborhood::operator!=(std::default_sentinel_t) const noexcept
+{
+    return cut1_ < vertices_;
+}
+
+WideTwoExchangeNeighborhood::WideTwoExchangeNeighborhood(std::size_t vertices) noexcept
+    : Neighborhood(vertices), minl_(std::max(vertices / 4, 3ull) + 1), cut1_(0), cut2_(minl_)
 {
 }
 
-WideTwoExchangeNeighborhood::WideTwoExchangeNeighborhood(const WideTwoExchangeNeighborhood& rhs)
-    : Neighborhood(rhs)
+WideTwoExchangeNeighborhood::WideTwoExchangeNeighborhood(const WideTwoExchangeNeighborhood& rhs) = default;
+
+std::unique_ptr<Neighborhood> WideTwoExchangeNeighborhood::clone() const
 {
+    return std::make_unique<WideTwoExchangeNeighborhood>(*this);
 }
 
 WideTwoExchangeNeighborhood& WideTwoExchangeNeighborhood::operator++()
 {
-    return *this; // TODO: translate Python
-//instance = base.instance
-//n = len(base.vertices)
-//min_l = max(int(instance.vertices / 4), 3) + 1  # smaller tour min length
-//max_l = int(instance.vertices / 2)  # smaller tour max length
-//
-//for i in range(-(max_l - 1), n - (max_l - 1)):
-//    for j in range(i + min_l, i + max_l + 1):
-//        # cut the loop in two: first for cutting beyond the bounds of the array, then for inside bounds.
-//        if (i < 0) and (j >= 0):
-//            neighbor_vertices = base.vertices[j:i]
-//            neighbor_vertices += reversed(base.vertices[i:] + base.vertices[:j])
-//            i_pos = base.vertices[i]
-//            i_prev = base.vertices[i-1]
-//            j_pos = base.vertices[j % n]
-//            j_prev = base.vertices[j-1]
-//            neighbor_value = base.value - instance.value(i_prev, i_pos) - instance.value(j_prev, j_pos) +\
-//                                instance.value(i_prev, j_prev) + instance.value(i_pos, j_pos)
-//            yield Solution(base.instance, neighbor_vertices, neighbor_value)
-//        else:
-//            neighbor_vertices = base.vertices[:i]
-//            neighbor_vertices += reversed(base.vertices[i:j])
-//            neighbor_vertices += base.vertices[j:]
-//            i_pos = base.vertices[i]
-//            i_prev = base.vertices[i-1]
-//            j_pos = base.vertices[j % n]
-//            j_prev = base.vertices[j-1]
-//            neighbor_value = base.value - instance.value(i_prev, i_pos) - instance.value(j_prev, j_pos) +\
-//                                instance.value(i_prev, j_prev) + instance.value(i_pos, j_pos)
-//            yield Solution(base.instance, neighbor_vertices, neighbor_value)
+    do {
+        cut2_++;
+
+        if (cut2_ >= vertices_) {
+            cut1_++;
+            cut2_ = cut1_ + minl_;
+
+            if (cut1_ >= vertices_)
+                break;
+        }
+    } while (cut2_ - cut1_ < minl_ || cut1_ + vertices_ - cut2_ < minl_);
+
+    return *this;
 }
 
-VertexShiftNeighborhood::VertexShiftNeighborhood(Solution&& base) noexcept
-: Neighborhood(std::move(base))
+Value WideTwoExchangeNeighborhood::objective(const Solution& base) const noexcept
+{
+    return std::abs(base.twoOptValue(cut1_, cut2_));
+}
+
+void WideTwoExchangeNeighborhood::apply(Solution& solution) const
+{
+    solution.twoOpt(cut1_, cut2_);
+}
+
+bool WideTwoExchangeNeighborhood::operator!=(std::default_sentinel_t) const noexcept
+{
+    return cut1_ < vertices_;
+}
+
+VertexShiftNeighborhood::VertexShiftNeighborhood(std::size_t vertices) noexcept
+: Neighborhood(vertices), cut_(0)
 {
 }
 
-VertexShiftNeighborhood::VertexShiftNeighborhood(const VertexShiftNeighborhood& rhs)
-    : Neighborhood(rhs)
+VertexShiftNeighborhood::VertexShiftNeighborhood(const VertexShiftNeighborhood& rhs) = default;
+
+std::unique_ptr<Neighborhood> VertexShiftNeighborhood::clone() const
 {
+    return std::make_unique<VertexShiftNeighborhood>(*this);
 }
 
 VertexShiftNeighborhood& VertexShiftNeighborhood::operator++()
 {
-    return *this; // TODO: translate Python
-//instance = base.instance
-//n = len(base.vertices)
-//for i in range(n):
-//    i_prev = (i+n-1) % n  # positive index of vertex before i
-//    i_pp = (i+n-2) % n  # positive index of vertex before vertex before i
-//    i_next = (i+1) % n  # positive index of vertex after i
-//    neighbor_value = base.value -\
-//                        instance.value(base.vertices[i_pp % n], base.vertices[i_prev % n]) -\
-//                        instance.value(base.vertices[i % n], base.vertices[i_next % n]) +\
-//                        instance.value(base.vertices[i_pp % n], base.vertices[i % n]) +\
-//                        instance.value(base.vertices[i_prev % n], base.vertices[i_next % n])
-//    neighbor_vertices = base.vertices[:]
-//    neighbor_vertices[i-1], neighbor_vertices[i] = neighbor_vertices[i], neighbor_vertices[i-1]
-//    yield Solution(base.instance, neighbor_vertices, neighbor_value)
+    cut_++;
+    return *this;
+}
+
+Value VertexShiftNeighborhood::objective(const Solution& base) const noexcept
+{
+    return std::abs(base.twoOptValue(cut_, (cut_ + 2) % vertices_));
+}
+
+void VertexShiftNeighborhood::apply(Solution& solution) const
+{
+    solution.twoOpt(cut_, (cut_ + 2) % vertices_);
+}
+
+bool VertexShiftNeighborhood::operator!=(std::default_sentinel_t) const noexcept
+{
+    return cut_ < vertices_;
 }
 
 Step::Step(std::unique_ptr<Neighborhood> neighborhood) noexcept
@@ -182,9 +190,14 @@ FirstImprovement::FirstImprovement(std::unique_ptr<Neighborhood> neighborhood) n
 
 void FirstImprovement::step(Solution& base)
 {
-    // TODO: translate Python
-    //v = self.objective(base)
-    //return next(filter(lambda n : self.objective(n) < v, self.neighborhood(base)), base)
+    auto baseObjective = base.objective();
+
+    for (auto ns = neighborhood_->clone(); *ns != std::default_sentinel; ++*ns) {
+        if (ns->objective(base) < baseObjective) {
+            ns->apply(base);
+            return;
+        }
+    }
 }
 
 BestImprovement::BestImprovement(std::unique_ptr<Neighborhood> neighborhood) noexcept
@@ -194,24 +207,19 @@ BestImprovement::BestImprovement(std::unique_ptr<Neighborhood> neighborhood) noe
 
 void BestImprovement::step(Solution& base)
 {
-    // TODO: translate Python
-    //best = min(self.neighborhood(base), key = self.objective, default = base)
-    //if self.objective(best) < self.objective(base) :
-    //    return best
-    //else :
-    //    return base
-}
+    auto bestObjective = base.objective();
+    std::unique_ptr<Neighborhood> bestNeighbor = nullptr;
 
-StepRandom::StepRandom(std::unique_ptr<Neighborhood> neighborhood) noexcept
-    : Step(move(neighborhood))
-{
-}
+    for (auto ns = neighborhood_->clone(); *ns != std::default_sentinel; ++*ns) {
+        const Value newObjective = ns->objective(base);
+        if (newObjective < bestObjective) {
+            bestObjective = newObjective;
+            bestNeighbor = ns->clone();
+        }
+    }
 
-void StepRandom::step(Solution& base)
-{
-    // TODO: translate Python
-    //ns = list(self.neighborhood(base))
-    //return self.random.choice(ns) if len(ns) > 0 else base
+    if(bestNeighbor)
+        bestNeighbor->apply(base);
 }
 
 WhenStagnant::WhenStagnant() noexcept
@@ -236,13 +244,13 @@ LocalSearch::LocalSearch(std::unique_ptr<Step> step, WhenStagnant doTerminate) n
 {
 }
 
-Solution LocalSearch::search(Solution&& start) const
+Solution LocalSearch::search(Solution solution)
 {
-    return Solution{ start }; // TODO: translate Python
-    //while not self.done(self, start) :
-    //    start = self.step(start)
+    do {
+        step_->step(solution);
+    } while (!doTerminate_.doneAfter(solution));
 
-    //    return start
+    return solution;
 }
 
 StandaloneLocalSearch::StandaloneLocalSearch(

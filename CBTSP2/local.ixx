@@ -1,13 +1,14 @@
 /**
  * Implementation of the local search algorithm and associated entities.
  *
- * A neighborhood is a view that derives neighbors from a base solution.
+ * A neighborhood is a view that derives neighbors and their tour value from a base solution.
  * A step function chooses one neighbor according to some criteria.
  */
 module;
 
 #include <iterator>
 #include <memory>
+#include <random>
 
 export module local;
 
@@ -17,40 +18,57 @@ import construction;
 /**
  * Base for neighborhood implementations.
  * 
- * Neighborhoods are iterators that can be combined with `std::default_sentinel`
- * in a `std::span` to obtain a view over all the neighbors.
+ * A Neighborhood is a non-standard iterator that can
+ * quickly compute the value of adjacent solutions.
+ *
+ * It can produce the indicated neighbor solution object on demand.
+ * It compares equal to `std::default_sentinel` for a past-end marker.
+ *
+ * Neighborhoods are only defined for full, not partial, solutions.
  */
-class Neighborhood
+export class Neighborhood
 {
 
 public:
 
-    using value_type = Solution; //!< This iterator iterates over Solution objects.
-    using reference = const value_type&; //!< Dereferencing this iterator yields references to Solutions.
-    using pointer = const value_type*; //!< Defines a pointer to the iterated-over Solutions.
-
     /**
-     * Initialize the Neighborhood from the base solution.
+     * Initialize the Neighborhood for the given tour size.
      *
-     * @param base: initial solution
+     * @param vertices: number of vertices in the problem
      */
-    explicit Neighborhood(Solution&& base) noexcept;
+    explicit Neighborhood(std::size_t vertices) noexcept;
 
     /**
-     * Copy constructor.
+     * Return a copy of this Neighborhood in its current state.
      */
-    explicit Neighborhood(const Neighborhood& rhs);
+    virtual std::unique_ptr<Neighborhood> clone() const = 0;
 
     /**
      * Advance to the next neighbor.
      */
     virtual Neighborhood& operator++() = 0;
 
-    //! Dereference.
-    reference operator*() const noexcept;
+    /**
+     * Compute the objective value for the currently indicated neighbor.
+     *
+     * @param base: base solution
+     * @return: the objective value of the currently indicated neighbor relative to base
+     */
+    virtual Value objective(const Solution& base) const noexcept = 0;
 
-    //! Access.
-    pointer operator->() const noexcept;
+    /**
+     * Change the base solution object into its neighbor according to
+     * the current state of the neighborhood iterator.
+     *
+     * @param solution: base solution to modify
+     */
+    virtual void apply(Solution& solution) const = 0;
+
+    /**
+     * Produce a solution object that is the neighbor of the given base
+     * solution according to the current state of the neighborhood iterator.
+     */
+    Solution applyCopy(const Solution& base) const;
 
     /**
      * Determine whether the iterator is exhausted.
@@ -62,35 +80,44 @@ public:
 protected:
 
     /**
-     * Stores the object currently indicated by this iterator.
+     * Stores the number of vertices in the problem.
      */
-    Solution solution_;
+    std::size_t vertices_;
+
+    // slicing is forbidden
+    Neighborhood(const Neighborhood& rhs) = default;
+    Neighborhood& operator=(const Neighborhood& ) = default;
 
 };
 
 /**
  * Generate neighbors from the base solution by exchanging two edges.
  */
-class TwoExchangeNeighborhood : public Neighborhood
+export class TwoExchangeNeighborhood : public Neighborhood
 {
 
 public:
 
     /**
-     * Initialize the iterator from the base solution.
+     * Initialize the Neighborhood for the given tour size.
      *
-     * @param base: initial solution
+     * @param vertices: number of vertices in the problem
      */
-    explicit TwoExchangeNeighborhood(Solution&& base) noexcept;
+    explicit TwoExchangeNeighborhood(std::size_t vertices) noexcept;
 
     //! Copy-constructor.
-    explicit TwoExchangeNeighborhood(const TwoExchangeNeighborhood& rhs);
+    TwoExchangeNeighborhood(const TwoExchangeNeighborhood& rhs);
 
+    std::unique_ptr<Neighborhood> clone() const override;
     TwoExchangeNeighborhood& operator++() override;
+    Value objective(const Solution& base) const noexcept override;
+    void apply(Solution& solution) const override;
+    bool operator!=(std::default_sentinel_t) const noexcept override;
 
 private:
 
-
+    std::size_t cut1_; // first edge to exchange is before vertex at this position
+    std::size_t cut2_; // second edge to exchange is before vertex at this position
 
 };
 
@@ -99,27 +126,32 @@ private:
  * In this variation, the two edges must be at least 3 vertices apart,
  * but still within 1 / 4 of the instance's number of vertices of each other.
  */
-class NarrowTwoExchangeNeighborhood : public Neighborhood
+export class NarrowTwoExchangeNeighborhood : public Neighborhood
 {
 
 public:
 
     /**
-     * Initialize the iterator from the base solution.
+     * Initialize the Neighborhood for the given tour size.
      *
-     * @param base: initial solution
+     * @param vertices: number of vertices in the problem
      */
-    explicit NarrowTwoExchangeNeighborhood(Solution&& base) noexcept;
+    explicit NarrowTwoExchangeNeighborhood(std::size_t vertices) noexcept;
 
     //! Copy-constructor.
-    explicit NarrowTwoExchangeNeighborhood(const NarrowTwoExchangeNeighborhood& rhs);
+    NarrowTwoExchangeNeighborhood(const NarrowTwoExchangeNeighborhood& rhs);
 
+    std::unique_ptr<Neighborhood> clone() const override;
     NarrowTwoExchangeNeighborhood& operator++() override;
+    Value objective(const Solution& base) const noexcept override;
+    void apply(Solution& solution) const override;
+    bool operator!=(std::default_sentinel_t) const noexcept override;
 
 private:
 
-
-
+    std::size_t maxl_; // maximum number of vertices in a sub-tour
+    std::size_t cut1_; // first edge to exchange is before vertex at this position
+    std::size_t cut2_; // second edge to exchange is before vertex at this position
 
 };
 
@@ -128,26 +160,32 @@ private:
  * In this variation, the two edges must be at least 1 / 4 of the
  * instance's number of vertices apart, leading to a drastic change.
  */
-class WideTwoExchangeNeighborhood : public Neighborhood
+export class WideTwoExchangeNeighborhood : public Neighborhood
 {
 
 public:
 
     /**
-     * Initialize the iterator from the base solution.
+     * Initialize the Neighborhood for the given tour size.
      *
-     * @param base: initial solution
+     * @param vertices: number of vertices in the problem
      */
-    explicit WideTwoExchangeNeighborhood(Solution&& base) noexcept;
+    explicit WideTwoExchangeNeighborhood(std::size_t vertices) noexcept;
 
     //! Copy-constructor.
-    explicit WideTwoExchangeNeighborhood(const WideTwoExchangeNeighborhood& rhs);
+    WideTwoExchangeNeighborhood(const WideTwoExchangeNeighborhood& rhs);
 
+    std::unique_ptr<Neighborhood> clone() const override;
     WideTwoExchangeNeighborhood& operator++() override;
+    Value objective(const Solution& base) const noexcept override;
+    void apply(Solution& solution) const override;
+    bool operator!=(std::default_sentinel_t) const noexcept override;
 
 private:
 
-
+    std::size_t minl_; // minimum number of vertices in a sub-tour
+    std::size_t cut1_; // first edge to exchange is before vertex at this position
+    std::size_t cut2_; // second edge to exchange is before vertex at this position
 
 };
 
@@ -157,26 +195,30 @@ private:
  *
  * This neighborhood is very local.
  */
-class VertexShiftNeighborhood : public Neighborhood
+export class VertexShiftNeighborhood : public Neighborhood
 {
 
 public:
 
     /**
-     * Initialize the iterator from the base solution.
+     * Initialize the Neighborhood for the given tour size.
      *
-     * @param base: initial solution
+     * @param vertices: number of vertices in the problem
      */
-    explicit VertexShiftNeighborhood(Solution&& base) noexcept;
+    explicit VertexShiftNeighborhood(std::size_t vertices) noexcept;
 
     //! Copy-constructor.
-    explicit VertexShiftNeighborhood(const VertexShiftNeighborhood& rhs);
+    VertexShiftNeighborhood(const VertexShiftNeighborhood& rhs);
 
+    std::unique_ptr<Neighborhood> clone() const override;
     VertexShiftNeighborhood& operator++() override;
+    Value objective(const Solution& base) const noexcept override;
+    void apply(Solution& solution) const override;
+    bool operator!=(std::default_sentinel_t) const noexcept override;
 
 private:
 
-
+    std::size_t cut_; // position of the vertex to shift one position higher
 
 };
 
@@ -254,20 +296,48 @@ public:
 /**
  * Random step function.
  */
-export class StepRandom : public Step
+export template<typename Rng> class StepRandom : public Step
 {
 
 public:
 
     /**
      * Construct the random step function for the given neighborhood.
+     *
+     * @param neighborhood: walk randomly among this neighborhood
+     * @param rng: standard random number generator to take random numbers from
      */
-    explicit StepRandom(std::unique_ptr<Neighborhood> neighborhood) noexcept;
+    explicit StepRandom(std::unique_ptr<Neighborhood> neighborhood, const Rng& rng) noexcept
+        : Step(move(neighborhood)), rng_(rng)
+    {
+    }
 
     /**
      * Modify the solution to a random neighbor.
      */
-    virtual void step(Solution& base) override;
+    virtual void step(Solution& base) override
+    {
+        // extremely stupid count, since neighborhood does not know its own size
+        int neighbors = 0;
+
+        for (auto ns = neighborhood_->clone(); *ns != std::default_sentinel; ++ * ns)
+            neighbors++;
+
+        if (neighbors > 0) {
+            const auto distribution = std::uniform_int_distribution{ 0, neighbors - 1 };
+            const int choice = distribution(rng_);
+            auto ns = neighborhood_->clone();
+
+            for (int i = 0; i < choice; i++)
+                ++* ns;
+
+            ns->apply(base);
+        }
+    }
+
+private:
+
+    Rng rng_;
 
 };
 
@@ -277,7 +347,7 @@ public:
  * This condition is fulfilled when the newest solution does not
  * improve on the best solution seen so far.
  */
-class WhenStagnant
+export class WhenStagnant
 {
 
 public:
@@ -316,12 +386,12 @@ public:
     explicit LocalSearch(std::unique_ptr<Step> step, WhenStagnant doTerminate) noexcept;
 
     /**
-     * Execute the search from the given base solution.
+     * Execute the search from the given start solution.
      *
-     * @param start: base solution
+     * @param solution: start solution
      * @return: the last solution found before the termination condition
      */
-    Solution search(Solution&& start) const;
+    Solution search(Solution solution);
 
 private:
 
