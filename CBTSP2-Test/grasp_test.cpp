@@ -53,7 +53,7 @@ TEST(Grasp, BasicRun)
     auto mockConstruction = std::make_unique<MockConstruction>();
     mockConstruction->inits_ = inits;
 
-    auto neighborhood = std::make_unique<VertexShiftNeighborhood>(6);
+    auto neighborhood = std::make_unique<TwoExchangeNeighborhood>(6, 2, 2);
     auto step = std::make_unique<BestImprovement>(move(neighborhood));
     auto localSearch = LocalSearch(move(step), WhenStagnant{});
 

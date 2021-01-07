@@ -3,6 +3,7 @@ module;
 #include <limits>
 #include <memory>
 #include <utility>
+#include <cassert>
 
 module local;
 
@@ -18,8 +19,17 @@ Solution Neighborhood::applyCopy(const Solution& base) const
     return neighbor;
 }
 
-TwoExchangeNeighborhood::TwoExchangeNeighborhood(std::size_t vertices) noexcept
-    : Neighborhood(vertices), cut1_(0), cut2_(2)
+TwoExchangeNeighborhood::TwoExchangeNeighborhood(std::size_t vertices,
+    std::size_t minl, std::size_t maxl) noexcept
+    : Neighborhood(vertices), minl_(minl), maxl_(maxl), cut1_(0), cut2_(minl)
+{
+    assert(minl >= 2);
+    assert(maxl >= minl);
+    assert(maxl <= vertices);
+}
+
+TwoExchangeNeighborhood::TwoExchangeNeighborhood(std::size_t vertices, std::size_t minl) noexcept
+    : TwoExchangeNeighborhood(vertices, minl, vertices)
 {
 }
 
@@ -32,12 +42,21 @@ std::unique_ptr<Neighborhood> TwoExchangeNeighborhood::clone() const
 
 TwoExchangeNeighborhood& TwoExchangeNeighborhood::operator++()
 {
-    cut2_++;
+    std::size_t shorterSubtour; // length of shorter subtour, may be restricted
 
-    if (cut2_ >= vertices_ - int(0 == cut1_)) {
-        cut1_++;
-        cut2_ = cut1_ + 2;
-    }
+    do {
+        cut2_++;
+
+        if (cut2_ >= vertices_) {
+            cut1_++;
+            cut2_ = cut1_ + minl_;
+
+            if (cut1_ >= vertices_ - minl_)
+                break;
+        }
+
+        shorterSubtour = std::min(cut2_ - cut1_, cut1_ + vertices_ - cut2_);
+    } while (shorterSubtour < minl_ || shorterSubtour > maxl_);
 
     return *this;
 }
@@ -54,128 +73,7 @@ void TwoExchangeNeighborhood::apply(Solution& solution) const
 
 bool TwoExchangeNeighborhood::operator!=(std::default_sentinel_t) const noexcept
 {
-    return cut1_ < vertices_ - 2;
-}
-
-NarrowTwoExchangeNeighborhood::NarrowTwoExchangeNeighborhood(std::size_t vertices) noexcept
-    : Neighborhood(vertices), maxl_(std::max(vertices / 4, 3ull)), cut1_(0), cut2_(3)
-{
-}
-
-NarrowTwoExchangeNeighborhood::NarrowTwoExchangeNeighborhood(const NarrowTwoExchangeNeighborhood& rhs) = default;
-
-std::unique_ptr<Neighborhood> NarrowTwoExchangeNeighborhood::clone() const
-{
-    return std::make_unique<NarrowTwoExchangeNeighborhood>(*this);
-}
-
-NarrowTwoExchangeNeighborhood& NarrowTwoExchangeNeighborhood::operator++()
-{
-    do {
-        cut2_++;
-
-        if (cut2_ >= vertices_) {
-            cut1_++;
-            cut2_ = cut1_ + 3;
-
-            if (cut1_ >= vertices_)
-                break;
-        }
-    } while ((cut2_ - cut1_ > maxl_ && cut1_ + vertices_ - cut2_ > maxl_) || cut1_ + vertices_ - cut2_ < 3);
-
-    return *this;
-}
-
-Value NarrowTwoExchangeNeighborhood::objective(const Solution& base) const noexcept
-{
-    return std::abs(base.twoOptValue(cut1_, cut2_));
-}
-
-void NarrowTwoExchangeNeighborhood::apply(Solution& solution) const
-{
-    solution.twoOpt(cut1_, cut2_);
-}
-
-bool NarrowTwoExchangeNeighborhood::operator!=(std::default_sentinel_t) const noexcept
-{
-    return cut1_ < vertices_;
-}
-
-WideTwoExchangeNeighborhood::WideTwoExchangeNeighborhood(std::size_t vertices) noexcept
-    : Neighborhood(vertices), minl_(std::max(vertices / 4, 3ull) + 1), cut1_(0), cut2_(minl_)
-{
-}
-
-WideTwoExchangeNeighborhood::WideTwoExchangeNeighborhood(const WideTwoExchangeNeighborhood& rhs) = default;
-
-std::unique_ptr<Neighborhood> WideTwoExchangeNeighborhood::clone() const
-{
-    return std::make_unique<WideTwoExchangeNeighborhood>(*this);
-}
-
-WideTwoExchangeNeighborhood& WideTwoExchangeNeighborhood::operator++()
-{
-    do {
-        cut2_++;
-
-        if (cut2_ >= vertices_) {
-            cut1_++;
-            cut2_ = cut1_ + minl_;
-
-            if (cut1_ >= vertices_)
-                break;
-        }
-    } while (cut2_ - cut1_ < minl_ || cut1_ + vertices_ - cut2_ < minl_);
-
-    return *this;
-}
-
-Value WideTwoExchangeNeighborhood::objective(const Solution& base) const noexcept
-{
-    return std::abs(base.twoOptValue(cut1_, cut2_));
-}
-
-void WideTwoExchangeNeighborhood::apply(Solution& solution) const
-{
-    solution.twoOpt(cut1_, cut2_);
-}
-
-bool WideTwoExchangeNeighborhood::operator!=(std::default_sentinel_t) const noexcept
-{
-    return cut1_ < vertices_;
-}
-
-VertexShiftNeighborhood::VertexShiftNeighborhood(std::size_t vertices) noexcept
-: Neighborhood(vertices), cut_(0)
-{
-}
-
-VertexShiftNeighborhood::VertexShiftNeighborhood(const VertexShiftNeighborhood& rhs) = default;
-
-std::unique_ptr<Neighborhood> VertexShiftNeighborhood::clone() const
-{
-    return std::make_unique<VertexShiftNeighborhood>(*this);
-}
-
-VertexShiftNeighborhood& VertexShiftNeighborhood::operator++()
-{
-    cut_++;
-    return *this;
-}
-
-Value VertexShiftNeighborhood::objective(const Solution& base) const noexcept
-{
-    return std::abs(base.twoOptValue(cut_, (cut_ + 2) % vertices_));
-}
-
-void VertexShiftNeighborhood::apply(Solution& solution) const
-{
-    solution.twoOpt(cut_, (cut_ + 2) % vertices_);
-}
-
-bool VertexShiftNeighborhood::operator!=(std::default_sentinel_t) const noexcept
-{
-    return cut_ < vertices_;
+    return cut1_ < vertices_ - minl_;
 }
 
 Step::Step(std::unique_ptr<Neighborhood> neighborhood) noexcept

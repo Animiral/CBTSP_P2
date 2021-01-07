@@ -55,7 +55,8 @@ TEST_F(LocalTest, TwoExchangeNeighborhood)
     EXPECT_TRUE(expected.empty());
 }
 
-// Ensure that the vertex shift neighborhood is covered as expected
+// Ensure that the vertex shift neighborhood (very narrow two-exchange neighborhood)
+// is covered as expected
 TEST_F(LocalTest, VertexShiftNeighborhood)
 {
     auto solution = Solution(problem, { 0, 1, 2, 3, 4 });
@@ -69,7 +70,7 @@ TEST_F(LocalTest, VertexShiftNeighborhood)
         { 0, 3, 2, 1, 4 }
     };
 
-    for (auto it = VertexShiftNeighborhood(5); it != std::default_sentinel; ++it) {
+    for (auto it = TwoExchangeNeighborhood(5, 2, 2); it != std::default_sentinel; ++it) {
         Solution s = it.applyCopy(solution);
         s.normalize();
         auto found = std::ranges::find(expected, s.vertices());
