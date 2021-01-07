@@ -12,7 +12,7 @@ protected:
 
     Problem problem;
 
-    ConstructionTest() : problem(5ull)
+    ConstructionTest() : problem(5ull, 100l)
     {
         problem.addEdge({ 0, 1, 1 });
         problem.addEdge({ 1, 2, 2 });

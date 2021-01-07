@@ -10,7 +10,7 @@ protected:
 
     Problem problem;
 
-    CbtspTest() : problem(4ull)
+    CbtspTest() : problem(4ull, 100l)
     {
         problem.addEdge({ 0, 1, 1 });
         problem.addEdge({ 0, 2, -1 });
@@ -38,10 +38,9 @@ TEST_F(CbtspTest, FromText)
 // Ensure that the problem's big-M is properly calculated.
 TEST_F(CbtspTest, BigM)
 {
-    EXPECT_EQ(11, problem.bigM());
-    EXPECT_EQ(11, problem.value(1, 3));
-    problem.calculateBigM();
-    EXPECT_EQ(10,  problem.bigM());
+    const auto text = "4 5\n0 1 1\n0 2 -1\n1 2 3\n2 3 5\n3 0 0\n";
+    const auto problem = Problem::fromText(text);
+    EXPECT_EQ(10, problem.bigM());
     EXPECT_EQ(10, problem.value(3, 1));
 }
 
@@ -66,6 +65,7 @@ TEST_F(CbtspTest, TwoOpt)
     auto solution = Solution(problem, { 0, 1, 2, 3 });
     solution.twoOpt(2, 0);
     EXPECT_EQ("1 0 2 3", solution.representation());
+    EXPECT_EQ(105, solution.value());
 }
 
 // Ensure that the the solution is correctly normalized.

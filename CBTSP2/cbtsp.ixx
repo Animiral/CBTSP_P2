@@ -24,12 +24,13 @@ export struct Edge
 
 /**
  * Represents an instance of the Cost - Balanced Traveling Salesperson Problem.
-
- * It automatically maintains a big-M value for unspecified edges.
+ *
+ * It maintains a big-M value for unspecified edges.
  * This big-M is computed so that any Solution which contains an unspecified edge will
  * have a worse value than the worst solution which does not.
- * The big-M value can be recomputed to the smallest possible such value after
- * the Problem instance is complete.
+ *
+ * The big-M value is computed to the smallest possible such value when
+ * loading the Problem instance from its text representation.
  */
 export class Problem
 {
@@ -37,9 +38,9 @@ export class Problem
 public:
 
     /**
-     * Construct a Problem with the given number of nodes.
+     * Construct a Problem with the given number of nodes and big-M value.
      */
-    explicit Problem(std::size_t vertices);
+    explicit Problem(std::size_t vertices, Value bigM);
 
     /**
      * Get the number of nodes in the instance.
@@ -47,7 +48,7 @@ public:
     std::size_t vertices() const;
 
     /**
-     * Get the number of nodes in the instance.
+     * Get the value that represents no edge between vertices.
      */
     Value bigM() const;
 
@@ -71,11 +72,6 @@ public:
     Value value(Vertex start, Vertex end) const;
 
     /**
-     * Recalculate the big_m attribute value for unspecified edges.
-     */
-    void calculateBigM();
-
-    /**
      * Parse the given text into an Instance.
      *
      * @param text: String which conforms to the syntax specified by the exercise assignment
@@ -85,9 +81,14 @@ public:
 
 private:
 
+    /**
+     * Calculate the big-M value for unspecified edges from the proposed edge list.
+     */
+    static Value calculateBigM(std::size_t vertices, const std::vector<Edge>& edges);
+
     std::size_t vertices_; //!< integer n of nodes in the instance, each identified by their number [0 : n - 1]
-    std::vector<Edge> edges_; //!< list of Edge objects connecting vertices
     Value big_m_; //!< value which is returned for edges between vertices that are not connected
+    std::vector<Value> lookup_; //!< table of edge values
 
 };
 
@@ -172,6 +173,14 @@ public:
      * @param vertex: the new vertex value
      */
     void insert(std::size_t pos, Vertex vertex);
+
+    /**
+     * Compute the new value of the solution, assuming a two-edge exchange move operation.
+     *
+     * @param v1: the first edge to exchange is the edge leading to the vertex at this index
+     * @param v2: the second edge to exchange is the edge leading to the vertex at this index
+     */
+    Value twoOptValue(std::size_t v1, std::size_t v2) const;
 
     /**
      * Perform a two-edge exchange move operation on the solution to arrive at a different solution.

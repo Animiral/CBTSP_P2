@@ -15,13 +15,11 @@ module cbtsp;
 
 import util;
 
-Problem::Problem(std::size_t vertices)
-    : vertices_(vertices), big_m_(1)
+Problem::Problem(std::size_t vertices, Value bigM)
+    : vertices_(vertices), big_m_(bigM), lookup_(vertices * vertices, bigM)
 {
     if (vertices < 3)
         throw std::invalid_argument("A valid instance consists of at least 3 vertices.");
-
-    edges_.reserve(vertices);
 }
 
 std::size_t Problem::vertices() const
@@ -45,11 +43,13 @@ void Problem::addEdge(Edge edge)
     if (edge.a == edge.b)
         throw std::invalid_argument(format("Looping edges (vertex {}) are forbidden.", edge.a));
 
-    if (std::numeric_limits<Value>::max() - std::abs(edge.value) < big_m_)
-        throw std::overflow_error("Big-M too large.");
+    const std::size_t indexAB = edge.a * vertices_ + edge.b;
+    const std::size_t indexBA = edge.b * vertices_ + edge.a;
 
-    edges_.push_back(edge);
-    big_m_ += std::abs(edge.value);
+    if (big_m_ != lookup_[indexAB] || big_m_ != lookup_[indexBA])
+        throw std::invalid_argument(format("Duplicate edge ({} - {}).", edge.a, edge.b));
+
+    lookup_[indexAB] = lookup_[indexBA] = edge.value;
 }
 
 Value Problem::value(Vertex start, Vertex end) const
@@ -57,38 +57,7 @@ Value Problem::value(Vertex start, Vertex end) const
     assert(start < vertices_);
     assert(end < vertices_);
 
-    for (const auto& e : edges_) {
-        if ((e.a == start && e.b == end) || (e.b == start && e.a == end))
-            return e.value;
-    }
-
-    return big_m_;
-}
-
-void Problem::calculateBigM()
-{
-    // There must be enough edges in the problem, otherwise we simply refuse to do anything
-    if (vertices_ > edges_.size())
-        return;
-
-    // 1. estimate theoretical min-valued and max-valued solution by assuming extreme edges
-    auto values = std::ranges::transform_view(edges_, [](Edge e) { return e.value; });
-    std::vector<Value> lowEdges(vertices_);
-    std::vector<Value> highEdges(vertices_);
-    std::ranges::partial_sort_copy(values, lowEdges, std::less<Value>{});
-    std::ranges::partial_sort_copy(values, highEdges, std::greater<Value>{});
-    const Value low = std::accumulate(lowEdges.begin(), lowEdges.end(), Value{});
-    const Value high = std::accumulate(highEdges.begin(), highEdges.end(), Value{});
-
-    // 2. are we creating positive or negative big-M? aim to go from less to more extreme
-    if (-low < high) {
-        // 3. replace the highest-value edge from the low solution with big-M -> must exceed high
-        big_m_ = high - low + lowEdges.back() + 1;
-    }
-    else {
-        // 3. replace the lowest-value edge from the high solution with big-M -> must exceed low
-        big_m_ = low - high + highEdges.back() - 1;
-    }
+    return lookup_[start * vertices_ + end];
 }
 
 Problem Problem::fromText(std::string text)
@@ -104,7 +73,7 @@ Problem Problem::fromText(std::string text)
     if (!stream)
         throw std::runtime_error("An instance must specify the number of vertices and edges.");
 
-    auto problem = Problem{ vertices };
+    std::vector<Edge> edgeList;
 
     for (std::size_t i = 0; i < edges; i++) {
         Vertex a; // first node in the edge
@@ -124,10 +93,42 @@ Problem Problem::fromText(std::string text)
         if (b >= vertices)
             throw std::out_of_range(format("To-vertex in edge {} is out of range: {} (>= {}).", i, b, vertices));
 
-        problem.addEdge({ a, b, value });
+        edgeList.push_back({ a, b, value });
     }
 
+    const Value bigM = calculateBigM(vertices, edgeList);
+    auto problem = Problem{ vertices, bigM };
+
+    for (const Edge& e : edgeList)
+        problem.addEdge(e);
+
     return problem;
+}
+
+Value Problem::calculateBigM(std::size_t vertices, const std::vector<Edge>& edges)
+{
+    // There must be enough edges in the problem, otherwise we simply refuse to compute
+    if (vertices > edges.size())
+        return 0;
+
+    // 1. estimate theoretical min-valued and max-valued solution by assuming extreme edges
+    auto values = std::ranges::transform_view(edges, [](Edge e) { return e.value; });
+    std::vector<Value> lowEdges(vertices);
+    std::vector<Value> highEdges(vertices);
+    std::ranges::partial_sort_copy(values, lowEdges, std::less<Value>{});
+    std::ranges::partial_sort_copy(values, highEdges, std::greater<Value>{});
+    const Value low = std::accumulate(lowEdges.begin(), lowEdges.end(), Value{});
+    const Value high = std::accumulate(highEdges.begin(), highEdges.end(), Value{});
+
+    // 2. are we creating positive or negative big-M? aim to go from less to more extreme
+    if (-low < high) {
+        // 3. replace the highest-value edge from the low solution with big-M -> must exceed high
+        return high - low + lowEdges.back() + 1;
+    }
+    else {
+        // 3. replace the lowest-value edge from the high solution with big-M -> must exceed low
+        return low - high + highEdges.back() - 1;
+    }
 }
 
 Solution::Solution(const Problem& problem, std::vector<Vertex>&& vertices)
@@ -219,6 +220,26 @@ void Solution::insert(std::size_t pos, Vertex vertex)
     vertices_.insert(vertices_.begin() + pos, vertex);
 }
 
+Value Solution::twoOptValue(std::size_t v1, std::size_t v2) const
+{
+    assert(v1 < vertices_.size());
+    assert(v2 < vertices_.size());
+
+    auto [low, high] = std::minmax(v1, v2);
+
+    assert(high - low >= 2);
+    assert(low + problem_->vertices() - high >= 2);
+
+    // compute new value by delta-evaluation
+    const std::size_t n = vertices_.size();
+    Vertex prev1 = vertices_[(low + n - 1) % n];
+    Vertex next1 = vertices_[low];
+    Vertex prev2 = vertices_[(high + n - 1) % n];
+    Vertex next2 = vertices_[high];
+    return value_ + problem_->value(prev1, prev2) + problem_->value(next1, next2)
+        - problem_->value(prev1, next1) - problem_->value(prev2, next2);
+}
+
 void Solution::twoOpt(std::size_t v1, std::size_t v2)
 {
     assert(v1 < vertices_.size());
@@ -226,15 +247,7 @@ void Solution::twoOpt(std::size_t v1, std::size_t v2)
 
     auto [low, high] = std::minmax(v1, v2);
 
-    // delta-update solution value
-    const std::size_t n = vertices_.size();
-    Vertex prev1 = vertices_[(low + n - 1) % n];
-    Vertex next1 = vertices_[low];
-    Vertex prev2 = vertices_[(high + n - 1) % n];
-    Vertex next2 = vertices_[high];
-    value_ += problem_->value(prev1, next2) + problem_->value(prev2, next1)
-        - problem_->value(prev1, next1) - problem_->value(prev2, next2);
-
+    value_ = twoOptValue(v1, v2);
     std::reverse(vertices_.begin() + low, vertices_.begin() + high);
 }
 
