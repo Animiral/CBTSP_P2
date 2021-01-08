@@ -341,7 +341,7 @@ public:
      * @param doTerminate: predicate to decide when to terminate the search
      */
     explicit StandaloneLocalSearch(
-        DeterministicConstruction&& construction,
+        std::unique_ptr<Construction> construction,
         std::unique_ptr<Step> step,
         WhenStagnant doTerminate) noexcept;
 
@@ -355,7 +355,7 @@ public:
 
 private:
 
-    DeterministicConstruction construction_;
+    std::unique_ptr<Construction> construction_;
     LocalSearch local_;
 
 };

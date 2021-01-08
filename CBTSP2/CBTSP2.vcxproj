@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -154,6 +154,8 @@
     <ClCompile Include="local.cpp" />
     <ClCompile Include="local.ixx" />
     <ClCompile Include="grasp.cpp" />
+    <ClCompile Include="setup.cpp" />
+    <ClCompile Include="setup.ixx" />
     <ClCompile Include="statistics.cpp" />
     <ClCompile Include="statistics.ixx" />
     <ClCompile Include="util.cpp" />

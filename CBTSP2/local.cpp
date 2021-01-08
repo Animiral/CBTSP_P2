@@ -152,14 +152,14 @@ Solution LocalSearch::search(Solution solution)
 }
 
 StandaloneLocalSearch::StandaloneLocalSearch(
-    DeterministicConstruction&& construction,
+    std::unique_ptr<Construction> construction,
     std::unique_ptr<Step> step,
     WhenStagnant doTerminate) noexcept
-    : construction_(std::move(construction)), local_(move(step), doTerminate)
+    : construction_(move(construction)), local_(move(step), doTerminate)
 {
 }
 
 Solution StandaloneLocalSearch::search(const Problem& problem)
 {
-    return local_.search(construction_.construct(problem));
+    return local_.search(construction_->construct(problem));
 }

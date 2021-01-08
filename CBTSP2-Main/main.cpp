@@ -1,44 +1,45 @@
 #include <iostream>
-#include <filesystem>
-#include <fstream>
-#include <streambuf>
-#include <ios>
 #include <string>
 
 import cbtsp;
 import config;
+import setup;
 import statistics;
 import util;
 
-// Read a problem input file
-std::string readFile(std::filesystem::path filePath)
-{
-    auto stream = std::ifstream{ filePath };
-    std::string contents;
-
-    stream.seekg(0, std::ios::end);
-    contents.reserve(narrow_cast<std::size_t>(static_cast<std::streamoff>(stream.tellg())));
-    stream.seekg(0, std::ios::beg);
-
-    contents.assign((std::istreambuf_iterator<char>(stream)),
-                     std::istreambuf_iterator<char>());
-    return contents;
-}
-
-Configuration theConfiguration;
-
 int main(int argc, const char* argv[])
 {
-    theConfiguration.readArgv(argc, argv);
+    Configuration configuration;
+    configuration.readArgv(argc, argv);
 
-    if (theConfiguration.inputFiles().empty()) {
+    if (configuration.inputFiles().empty()) {
         std::cout << "No input file.\n";
         return {};
     }
 
-    auto problem = Problem::fromText(readFile(theConfiguration.inputFiles().front()));
-    std::cout << "Problem parsed.\n";
+    for (const auto inputFile : configuration.inputFiles()) {
+        std::cout << "Loading problem: " << inputFile.filename() << " - ";
+        const auto problem = readProblemFile(configuration.inputFiles().front());
+        std::cout << "loaded.\n";
 
-    auto statistics = Statistics{};
-    std::cout << "Got stats.\n";
+        const auto searchBuilder = SearchBuilder(configuration.algorithm(),
+            configuration.stepFunction(),
+            problem,
+            configuration.iterations());
+
+        const auto search = searchBuilder.buildSearch();
+
+        const auto name = inputFile.stem().string();
+        std::cout << format("Running {} searches on " + name + " - ", configuration.runs());
+        const auto statistics = Statistics::measure(name, *search, problem, configuration.runs());
+        std::cout << "done.\n";
+
+        auto solutionFile = inputFile;
+        solutionFile.replace_filename( + ".solution");
+        std::cout << "Recording results for " << name << " - ";
+        writeResults(statistics, inputFile, configuration.statsOutfile());
+        std::cout << "written.\n";
+    }
+
+    std::cout << "All done.\n";
 }

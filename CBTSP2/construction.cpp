@@ -91,3 +91,13 @@ Value BestTourInserter::tourObjective(const Problem& problem, Solution& partialS
         + problem.value(prev, nextVertex) + problem.value(nextVertex, next)
         - problem.value(prev, next));
 }
+
+ConstructionSearch::ConstructionSearch(std::unique_ptr<Construction> construction) noexcept
+    : construction_(move(construction))
+{
+}
+
+Solution ConstructionSearch::search(const Problem& problem)
+{
+    return construction_->construct(problem);
+}

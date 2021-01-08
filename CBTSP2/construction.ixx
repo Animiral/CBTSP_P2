@@ -5,6 +5,7 @@ module;
 
 #include <random>
 #include <utility>
+#include <memory>
 
 export module construction;
 
@@ -178,3 +179,22 @@ private:
 
 export using RandomConstruction = SelectInsertConstruction<RandomSelector<std::default_random_engine>>;
 export using DeterministicConstruction = SelectInsertConstruction<FarthestCitySelector>;
+
+/**
+ * This is a simple search algorithm that will use the result of
+ * a construction heuristic as a search result.
+ */
+export class ConstructionSearch : public Search
+{
+
+public:
+
+    explicit ConstructionSearch(std::unique_ptr<Construction> construction) noexcept;
+
+    Solution search(const Problem& problem) override;
+
+private:
+
+    std::unique_ptr<Construction> construction_;
+
+};
