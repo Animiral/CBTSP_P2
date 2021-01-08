@@ -185,21 +185,27 @@ bool Solution::isPartial() const noexcept
     return vertices_.size() < problem_->vertices();
 }
 
-bool Solution::isFeasible() const
+bool Solution::isFeasible() const noexcept
 {
-    if (isPartial())
-        return false;
+    return !isPartial() && 0 == countInfeasibleEdges();
+}
 
+int Solution::countInfeasibleEdges() const noexcept
+{
+    if (vertices_.empty())
+        return 0;
+
+    int infeasible = 0;
     Vertex pre = vertices_.back();
 
     for (auto it = vertices_.cbegin(); it != vertices_.cend(); ++it) {
-        if (problem_->value(pre, *it) >= problem_->bigM())
-            return false;
+        if (problem_->value(pre, *it) == problem_->bigM())
+            infeasible++;
 
         pre = *it;
     }
 
-    return true;
+    return infeasible;
 }
 
 void Solution::insert(std::size_t pos, Vertex vertex)

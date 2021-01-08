@@ -1,34 +1,135 @@
+module;
+
+#include <ranges>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <cassert>
+#include <chrono>
+
 module statistics;
 
-Statistics::Statistics() noexcept
-	: bestSolution_(), countInfeasible_(0), countTotal_(0)
+// ---- helpers ----
+
+bool isFeasible(const Solution& s)
 {
+    return s.isFeasible();
 }
 
-void Statistics::submit(const Solution& solution)
+bool isInfeasible(const Solution& s)
 {
-    // TODO: translate Python
-    //def submit_solution(self, solution) :
-    //    self.count_total += 1
+    return !s.isFeasible();
+}
 
-    //    if solution.is_feasible() :
-    //        if self.best_solution is None or solution.objective() < self.best_solution.objective() :
-    //            self.best_solution = solution
-    //        else :
-    //            self.count_infeasible += 1
+bool lessObjective(const Solution& s, const Solution& t)
+{
+    return s.objective() < t.objective();
+}
+
+// ---- Statistics member functions ----
+
+void Statistics::record(const Solution& solution, Runtime runtime)
+{
+    solutions_.emplace_back(solution);
+    runtimes_.push_back(runtime);
+}
+
+int Statistics::samples() const noexcept
+{
+    return static_cast<int>(solutions_.size());
+}
+
+int Statistics::feasibles() const noexcept
+{
+    return static_cast<int>(std::ranges::count_if(solutions_, isFeasible));
 }
 
 const Solution* Statistics::bestSolution() const noexcept
 {
-    return bestSolution_ ? &*bestSolution_ : nullptr;
+    return &*std::ranges::min_element(solutions_, lessObjective);
 }
 
-int Statistics::countInfeasible() const noexcept
+float Statistics::meanObjective() const noexcept
 {
-    return countInfeasible_;
+    const auto feasibleSolutions = std::ranges::filter_view(solutions_, isFeasible);
+
+    const auto n = feasibles();
+    const auto getObjective = [n](const Solution& s) { return static_cast<float>(s.objective()) / n; };
+    auto objectives = std::ranges::transform_view(feasibleSolutions, getObjective);
+
+    return std::accumulate(objectives.begin(), objectives.end(), 0.f);
 }
 
-int Statistics::countTotal() const noexcept
+float Statistics::stdevObjective() const noexcept
 {
-    return countTotal_;
+    const auto feasibleSolutions = std::ranges::filter_view(solutions_, isFeasible);
+
+    // good approximation for unbiased sample standard deviation
+    // see https://en.wikipedia.org/wiki/Standard_deviation#Unbiased_sample_standard_deviation
+    const auto n = feasibles();
+    const auto mean = meanObjective();
+    const auto getSqdev = [n, mean](const Solution& s)
+    {
+        const auto dev = static_cast<float>(s.objective()) - mean;
+        return dev * dev / (static_cast<float>(n) - 1.5f);
+    };
+    auto sqdevs = std::ranges::transform_view(feasibleSolutions, getSqdev);
+    return std::sqrt(std::accumulate(sqdevs.begin(), sqdevs.end(), 0.f));
+}
+
+float Statistics::meanInfEdges() const noexcept
+{
+    const auto infeasibles = std::ranges::filter_view(solutions_, isInfeasible);
+
+    const auto n = solutions_.size() - feasibles();
+    const auto getInfEdges = [n](const Solution& s) { return static_cast<float>(s.countInfeasibleEdges()) / n; };
+    auto infEdges = std::ranges::transform_view(infeasibles, getInfEdges);
+
+    return std::accumulate(infEdges.begin(), infEdges.end(), 0.f);
+}
+
+float Statistics::stdevInfEdges() const noexcept
+{
+    const auto infeasibles = std::ranges::filter_view(solutions_, isInfeasible);
+
+    // good approximation for unbiased sample standard deviation
+    // see https://en.wikipedia.org/wiki/Standard_deviation#Unbiased_sample_standard_deviation
+    const auto n = solutions_.size() - feasibles();
+    const auto mean = meanInfEdges();
+    const auto getSqdev = [n, mean](const Solution& s)
+    {
+        const auto dev = static_cast<float>(s.countInfeasibleEdges()) - mean;
+        return dev * dev / (static_cast<float>(n) - 1.5f);
+    };
+    auto sqdevs = std::ranges::transform_view(infeasibles, getSqdev);
+    return std::sqrt(std::accumulate(sqdevs.begin(), sqdevs.end(), 0.f));
+}
+
+Runtime Statistics::medRuntime() const noexcept
+{
+    const auto n = runtimes_.size();
+    assert(n > 0);
+
+    if (1 == n % 2) {
+        return runtimes_[n / 2];
+    }
+    else {
+        return (runtimes_[n / 2] + runtimes_[n / 2 + 1]) / 2;
+    }
+}
+
+Statistics Statistics::measure(Search& search, const Problem& problem, int samples)
+{
+    assert(samples > 0);
+
+    Statistics statistics;
+
+    for (int i = 0; i < samples; i++) {
+        const auto start = Clock::now();
+        const auto& solution = search.search(problem);
+        auto stop = Clock::now();
+        statistics.record(solution, stop - start);
+    }
+
+    return statistics;
 }

@@ -160,11 +160,18 @@ public:
     bool isPartial() const noexcept;
 
     /**
-     * The Solution is feasible if it is complete and does not use “non - edges” with big - M value.
+     * The Solution is feasible if it is complete and does not use “non - edges” with big-M value.
      *
      * @return: true if the Solution is feasible, false otherwise
      */
-    bool isFeasible() const;
+    bool isFeasible() const noexcept;
+
+    /**
+     * Get the number of edges in the Solution which have big-M value in the problem.
+     *
+     * @return: the number of infeasible edges
+     */
+    int countInfeasibleEdges() const noexcept;
 
     /**
      * Extend the solution by including an additional vertex at the specified position.
