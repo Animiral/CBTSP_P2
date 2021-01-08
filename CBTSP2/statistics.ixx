@@ -4,6 +4,7 @@
 module;
 
 #include <chrono>
+#include <string>
 
 export module statistics;
 
@@ -29,9 +30,22 @@ export class Statistics
 public:
 
     /**
+     * Construct the statistics record under the given name.
+     * The name can be used later to identify the measurement.
+     *
+     * @param name: identifying name of the statistical record
+     */
+    explicit Statistics(const std::string& name);
+
+    /**
      * Record a result.
      */
     void record(const Solution& solution, Runtime runtime);
+
+    /**
+     * Get the identifying name of the statistical record.
+     */
+    const std::string& name() const noexcept;
 
     /**
      * Get the total number of Solutions recorded.
@@ -77,14 +91,16 @@ public:
      * Execute the given search on the given problem instance repeatedly
      * and enter relevant results into the statistical record.
      *
+     * @param name: identifying name of the statistical record
      * @param search: search heuristic
      * @param problem: problem instance
      * @param samples: number of repetitions to sample
      */
-    static Statistics measure(Search& search, const Problem& problem, int samples);
+    static Statistics measure(const std::string& name, Search& search, const Problem& problem, int samples);
 
 private:
 
+    std::string name_;
     std::vector<Solution> solutions_;
     std::vector<Runtime> runtimes_;
 

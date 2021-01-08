@@ -28,10 +28,20 @@ bool lessObjective(const Solution& s, const Solution& t)
 
 // ---- Statistics member functions ----
 
+Statistics::Statistics(const std::string& name)
+    : name_(name)
+{
+}
+
 void Statistics::record(const Solution& solution, Runtime runtime)
 {
     solutions_.emplace_back(solution);
     runtimes_.push_back(runtime);
+}
+
+const std::string& Statistics::name() const noexcept
+{
+    return name_;
 }
 
 int Statistics::samples() const noexcept
@@ -118,11 +128,11 @@ Runtime Statistics::medRuntime() const noexcept
     }
 }
 
-Statistics Statistics::measure(Search& search, const Problem& problem, int samples)
+Statistics Statistics::measure(const std::string& name, Search& search, const Problem& problem, int samples)
 {
     assert(samples > 0);
 
-    Statistics statistics;
+    Statistics statistics{ name };
 
     for (int i = 0; i < samples; i++) {
         const auto start = Clock::now();
