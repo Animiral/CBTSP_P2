@@ -1,5 +1,6 @@
 // tests for the GRASP implementation
 #include "gtest/gtest.h"
+#include <cassert>
 
 import grasp;
 import cbtsp;
@@ -48,27 +49,21 @@ TEST(Grasp, BasicRun)
     {
         size_t i_ = 0;
         const Solution* inits_;
-        Solution construct(const Problem&) override { return inits_[i_++]; }
+        Solution construct(const Problem&) override
+        {
+            assert(i_ < 3);
+            return inits_[i_++];
+        }
     };
     auto mockConstruction = std::make_unique<MockConstruction>();
     mockConstruction->inits_ = inits;
 
     auto neighborhood = std::make_unique<TwoExchangeNeighborhood>(6, 2, 2);
     auto step = std::make_unique<BestImprovement>(move(neighborhood));
-    auto localSearch = LocalSearch(move(step), WhenStagnant{});
+    auto localSearch = LocalSearch(move(step));
 
-    auto grasp = Grasp(move(mockConstruction), std::move(localSearch), AfterIterations{ 3 });
+    auto grasp = Grasp(move(mockConstruction), std::move(localSearch), 3);
     Solution actual = grasp.search(problem);
     actual.normalize();
     EXPECT_EQ(actual.vertices(), globalOpt.vertices());
-}
-
-// Test the termination condition after N iterations.
-TEST(Grasp, Termination)
-{
-    auto termination = AfterIterations(3);
-    EXPECT_FALSE(termination.done());
-    EXPECT_FALSE(termination.done());
-    EXPECT_FALSE(termination.done());
-    EXPECT_TRUE(termination.done());
 }

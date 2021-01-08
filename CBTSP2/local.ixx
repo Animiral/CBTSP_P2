@@ -266,35 +266,10 @@ private:
 };
 
 /**
- * Termination condition to be used with search.
- *
- * This condition is fulfilled when the newest solution does not
- * improve on the best solution seen so far.
- */
-export class WhenStagnant
-{
-
-public:
-
-    WhenStagnant() noexcept;
-
-    /**
-     * Evaluate the given solution against the best objective value in memory.
-     *
-     * @param solution: the candidate solution
-     * @return: false if the solution constitutes an improvement, true if we are no longer improving
-     */
-    bool doneAfter(const Solution& solution) noexcept;
-
-private:
-
-    Value best_; //!< best value seen so far
-
-};
-
-
-/**
  * Local search meta - algorithm implementation.
+ *
+ * The local search improves on the solution step by step until
+ * a step does not improve on the solution anymore.
  */
 export class LocalSearch
 {
@@ -305,22 +280,20 @@ public:
      * Construct the local search.
      *
      * @param step: step function
-     * @param doTerminate: predicate to decide when to terminate the search
      */
-    explicit LocalSearch(std::unique_ptr<Step> step, WhenStagnant doTerminate) noexcept;
+    explicit LocalSearch(std::unique_ptr<Step> step) noexcept;
 
     /**
      * Execute the search from the given start solution.
      *
      * @param solution: start solution
-     * @return: the last solution found before the termination condition
+     * @return: the last solution found in the current locality
      */
     Solution search(Solution solution);
 
 private:
 
     std::unique_ptr<Step> step_;
-    WhenStagnant doTerminate_;
 
 };
 
@@ -342,8 +315,7 @@ public:
      */
     explicit StandaloneLocalSearch(
         std::unique_ptr<Construction> construction,
-        std::unique_ptr<Step> step,
-        WhenStagnant doTerminate) noexcept;
+        std::unique_ptr<Step> step) noexcept;
 
     /**
      * Execute the search for the given instance.

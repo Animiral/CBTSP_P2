@@ -7,7 +7,8 @@ import setup;
 import statistics;
 import util;
 
-int main(int argc, const char* argv[])
+// run() is like the main function, but may throw exceptions.
+int run(int argc, const char* argv[])
 {
     Configuration configuration;
     configuration.readArgv(argc, argv);
@@ -19,7 +20,7 @@ int main(int argc, const char* argv[])
 
     for (const auto inputFile : configuration.inputFiles()) {
         std::cout << "Loading problem: " << inputFile.filename() << " - ";
-        const auto problem = readProblemFile(configuration.inputFiles().front());
+        const auto problem = readProblemFile(inputFile);
         std::cout << "loaded.\n";
 
         const auto searchBuilder = SearchBuilder(configuration.algorithm(),
@@ -35,11 +36,22 @@ int main(int argc, const char* argv[])
         std::cout << "done.\n";
 
         auto solutionFile = inputFile;
-        solutionFile.replace_filename( + ".solution");
+        solutionFile.replace_filename(name + ".solution");
         std::cout << "Recording results for " << name << " - ";
-        writeResults(statistics, inputFile, configuration.statsOutfile());
+        writeResults(statistics, solutionFile, configuration.statsOutfile());
         std::cout << "written.\n";
     }
 
     std::cout << "All done.\n";
+    return 0;
+}
+
+int main(int argc, const char* argv[])
+{
+    try {
+        return run(argc, argv);
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Aborted due to error: " << e.what() << "\n";
+    }
 }

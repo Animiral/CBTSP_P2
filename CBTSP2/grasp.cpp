@@ -2,33 +2,21 @@ module;
 
 #include <memory>
 #include <utility>
+#include <cassert>
 
 module grasp;
 
-AfterIterations::AfterIterations(int iterations) noexcept
-    : iterations_(iterations)
+Grasp::Grasp(std::unique_ptr<Construction> construction, LocalSearch&& localSearch, int iterations) noexcept
+    : construction_(move(construction)), localSearch_(std::move(localSearch)), iterations_(iterations)
 {
-}
-
-bool AfterIterations::done() noexcept
-{
-    return iterations_-- <= 0;
-}
-
-Grasp::Grasp(std::unique_ptr<Construction> construction, LocalSearch&& localSearch, AfterIterations doTerminate) noexcept
-    : construction_(move(construction)), localSearch_(std::move(localSearch)), doTerminate_(doTerminate)
-{
+    assert(iterations > 0);
 }
 
 Solution Grasp::search(const Problem& problem)
 {
-    Solution solution{ problem, {} };
+    Solution solution = localSearch_.search(construction_->construct(problem));
 
-    if (!doTerminate_.done()) {
-        solution = localSearch_.search(construction_->construct(problem));
-    }
-
-    while (!doTerminate_.done()) {
+    for (int i = 1; i < iterations_; i++) {
         Solution candidate = localSearch_.search(construction_->construct(problem));
         if (candidate.objective() < solution.objective()) {
             solution = std::move(candidate);

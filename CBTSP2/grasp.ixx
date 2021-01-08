@@ -17,34 +17,6 @@ import construction;
 import local;
 
 /**
- * Termination condition to be used with GRASP.
- */
-export class AfterIterations
-{
-
-public:
-
-    /**
-     * Construct the condition with the specified number of iterations.
-     *
-     * @param iterations: number of times to indicate non-termination
-     */
-    explicit AfterIterations(int iterations) noexcept;
-
-    /**
-     * Return whether the specified number of iterations(assuming one call per iteration) have passed.
-     *
-     * @return: true if the configured number of iterations has passed, false otherwise
-     */
-    bool done() noexcept;
-
-private:
-
-    int iterations_;
-
-};
-
-/**
  * GRASP implementation.
  */
 export class Grasp : public Search
@@ -57,15 +29,15 @@ public:
      *
      * @param construction: construction heuristic, must be randomized
      * @param localSearch: local search algorithm
-     * @param doTerminate: predicate to decide when to terminate the search
+     * @param iterations: number of random constructions to consider
      */
-    explicit Grasp(std::unique_ptr<Construction> construction, LocalSearch&& localSearch, AfterIterations doTerminate) noexcept;
+    explicit Grasp(std::unique_ptr<Construction> construction, LocalSearch&& localSearch, int iterations) noexcept;
 
     /**
      * Execute the GRASP search scheme for the given problem.
      *
      * @param problem: CBTSP instance
-     * @return: the last solution found before the termination condition
+     * @return: the best solution found within the iterations
      */
     virtual Solution search(const Problem& problem) override;
 
@@ -73,6 +45,6 @@ private:
 
     std::unique_ptr<Construction> construction_;
     LocalSearch localSearch_;
-    AfterIterations doTerminate_;
+    int iterations_;
 
 };

@@ -1,9 +1,10 @@
-# MSVC output directories\
+# MSVC output directories
 .vs/
 Debug/
 Release/
 x64/
 /packages/
+*.vcxproj.user
 
 # Doxygen output
 /docs/html/

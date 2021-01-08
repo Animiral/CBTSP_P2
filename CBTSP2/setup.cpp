@@ -36,6 +36,9 @@ Problem readProblemFile(std::filesystem::path filePath)
         std::istreambuf_iterator<char>());
     stream.close();
 
+    if (!stream)
+        throw std::runtime_error("Error reading problem from " + filePath.string());
+
     return Problem::fromText(contents);
 }
 
@@ -44,6 +47,9 @@ void writeResults(const Statistics& statistics, std::filesystem::path solutionPa
     auto stream = std::ofstream{ solutionPath, std::ios_base::out }; // overwrite
     stream << statistics.bestSolution()->representation() << "\n";
     stream.close();
+
+    if (statsOutPath.empty())
+        return; // do not write stats
 
     using fracSecs = std::chrono::duration<float>;
 
@@ -58,6 +64,9 @@ void writeResults(const Statistics& statistics, std::filesystem::path solutionPa
     stream.open(statsOutPath, std::ios_base::app); // append CSV
     stream << csv << "\n";
     stream.close();
+
+    if (!stream)
+        throw std::runtime_error("Error writing stats to " + statsOutPath.string());
 }
 
 SearchBuilder::SearchBuilder(Configuration::Algorithm algorithm,
@@ -80,12 +89,11 @@ std::unique_ptr<Search> SearchBuilder::buildSearch() const
 
     case Configuration::Algorithm::LOCAL_SEARCH:
         return std::make_unique<StandaloneLocalSearch>(buildDeterministicConstruction(),
-            buildStep(buildFullNeighborhood()), WhenStagnant{});
+            buildStep(buildFullNeighborhood()));
 
     case Configuration::Algorithm::GRASP:
         return std::make_unique<Grasp>(buildRandomConstruction(),
-            LocalSearch(buildStep(buildFullNeighborhood()), WhenStagnant{}),
-            AfterIterations{ iterations_ });
+            LocalSearch(buildStep(buildFullNeighborhood())), iterations_);
 
     case Configuration::Algorithm::VND:
         return std::make_unique<Vnd>(buildRandomConstruction(), buildVndSteps());
@@ -103,7 +111,7 @@ std::unique_ptr<Search> SearchBuilder::buildSearch() const
 std::default_random_engine SearchBuilder::buildRandom() const
 {
     const auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-    return std::default_random_engine{ narrow_cast<std::default_random_engine::result_type>(seed) };
+    return std::default_random_engine{ static_cast<std::default_random_engine::result_type>(seed) };
 }
 
 std::unique_ptr<DeterministicConstruction> SearchBuilder::buildDeterministicConstruction() const

@@ -120,42 +120,33 @@ void BestImprovement::step(Solution& base)
         bestNeighbor->apply(base);
 }
 
-WhenStagnant::WhenStagnant() noexcept
-    : best_(std::numeric_limits<Value>::max())
-{
-}
-
-bool WhenStagnant::doneAfter(const Solution& solution) noexcept
-{
-    auto objective = solution.objective();
-    if (objective >= best_) {
-        return true;
-    }
-    else {
-        best_ = objective;
-        return false;
-    }
-}
-
-LocalSearch::LocalSearch(std::unique_ptr<Step> step, WhenStagnant doTerminate) noexcept
-    : step_(move(step)), doTerminate_(doTerminate)
+LocalSearch::LocalSearch(std::unique_ptr<Step> step) noexcept
+    : step_(move(step))
 {
 }
 
 Solution LocalSearch::search(Solution solution)
 {
-    do {
+    auto best = solution.objective();
+
+    for (;;) {
         step_->step(solution);
-    } while (!doTerminate_.doneAfter(solution));
+
+        const auto objective = solution.objective();
+
+        if (objective >= best)
+            break;
+        else
+            best = objective;
+    }
 
     return solution;
 }
 
 StandaloneLocalSearch::StandaloneLocalSearch(
     std::unique_ptr<Construction> construction,
-    std::unique_ptr<Step> step,
-    WhenStagnant doTerminate) noexcept
-    : construction_(move(construction)), local_(move(step), doTerminate)
+    std::unique_ptr<Step> step) noexcept
+    : construction_(move(construction)), local_(move(step))
 {
 }
 

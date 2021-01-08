@@ -88,7 +88,7 @@ TEST_F(LocalTest, Search)
 
     auto neighborhood = std::make_unique<TwoExchangeNeighborhood>(5);
     auto step = std::make_unique<BestImprovement>(move(neighborhood));
-    auto search = LocalSearch(move(step), WhenStagnant{});
+    auto search = LocalSearch(move(step));
     auto actual = search.search(std::move(start));
     actual.normalize();
 
