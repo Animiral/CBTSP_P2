@@ -52,6 +52,11 @@ public:
     int runs() const noexcept;
 
     /**
+     * Get the configured output file for the statistical evaluation.
+     */
+    std::filesystem::path statsOutfile() const noexcept;
+
+    /**
      * Get the configured set of CBTSP instance input files.
      */
     const std::vector<std::filesystem::path>& inputFiles() const noexcept;
@@ -62,6 +67,7 @@ private:
     StepFunction stepFunction_ = StepFunction::BEST_IMPROVEMENT;
     int iterations_ = 100;
     int runs_ = 100;
+    std::filesystem::path statsOutfile_;
     std::vector<std::filesystem::path> inputFiles_;
 
 };
