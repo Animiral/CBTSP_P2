@@ -143,7 +143,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="aco.ixx" />
+    <ClCompile Include="mco.cpp" />
+    <ClCompile Include="mco.ixx" />
     <ClCompile Include="cbtsp.cpp" />
     <ClCompile Include="cbtsp.ixx" />
     <ClCompile Include="config.cpp" />

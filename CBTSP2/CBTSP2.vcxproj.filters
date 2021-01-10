@@ -43,9 +43,6 @@
     <ClCompile Include="vnd.ixx">
       <Filter>Module Interface Files</Filter>
     </ClCompile>
-    <ClCompile Include="aco.ixx">
-      <Filter>Module Interface Files</Filter>
-    </ClCompile>
     <ClCompile Include="statistics.ixx">
       <Filter>Module Interface Files</Filter>
     </ClCompile>
@@ -66,6 +63,12 @@
     </ClCompile>
     <ClCompile Include="setup.ixx">
       <Filter>Module Interface Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mco.ixx">
+      <Filter>Module Interface Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mco.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
