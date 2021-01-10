@@ -68,15 +68,12 @@ Solution Mouse::construct()
     // starting location is random
     std::size_t start = std::uniform_int_distribution{ 0ull, n - 1 }(*random_);
     if (start > 0)
-        solution.twoOpt(0, start + 1);
+        solution.twoOpt(0, (start + 1) % n);
 
     for (std::size_t i = 1; i < n; i++) {
-        // find next vertex based on neighbors and pheromones, >i
-        std::size_t next = decideNext(solution, i);
-
-        if (next > i) {
-            solution.twoOpt(i, next + 1);
-        }
+        // find next vertex based on neighbors and pheromones
+        const auto next = decideNext(solution, i);
+        solution.twoOpt(i, (next + 1) % n);
     }
 
     // we got our solution, now do reinforcement

@@ -238,8 +238,9 @@ Value Solution::twoOptValue(std::size_t v1, std::size_t v2) const
 
     auto [low, high] = std::minmax(v1, v2);
 
-    assert(high - low >= 2);
-    assert(low + problem_->vertices() - high >= 2);
+    // no change?
+    if (high - low < 2 || low + problem_->vertices() - high < 2)
+        return value_;
 
     // compute new value by delta-evaluation
     const std::size_t n = vertices_.size();
