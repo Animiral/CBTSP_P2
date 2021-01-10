@@ -21,11 +21,6 @@ bool isInfeasible(const Solution& s)
     return !s.isFeasible();
 }
 
-bool lessObjective(const Solution& s, const Solution& t)
-{
-    return s.objective() < t.objective();
-}
-
 // ---- Statistics member functions ----
 
 Statistics::Statistics(const std::string& name)
@@ -56,7 +51,7 @@ int Statistics::feasibles() const noexcept
 
 const Solution* Statistics::bestSolution() const noexcept
 {
-    return &*std::ranges::min_element(solutions_, lessObjective);
+    return &*std::ranges::min_element(solutions_, std::less<Solution>{});
 }
 
 float Statistics::meanObjective() const noexcept

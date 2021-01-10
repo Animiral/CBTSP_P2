@@ -1,6 +1,5 @@
 module;
 
-#include <random>
 #include <memory>
 #include <vector>
 #include <string>
@@ -20,7 +19,7 @@ import construction;
 import local;
 import grasp;
 import vnd;
-import aco;
+import mco;
 import util;
 
 Problem readProblemFile(std::filesystem::path filePath)
@@ -72,8 +71,10 @@ void writeResults(const Statistics& statistics, std::filesystem::path solutionPa
 SearchBuilder::SearchBuilder(Configuration::Algorithm algorithm,
     Configuration::StepFunction stepFunction,
     const Problem& problem,
-    int iterations) noexcept
-    : algorithm_(algorithm), stepFunction_(stepFunction), problem_(&problem), iterations_(iterations)
+    int iterations,
+    const std::shared_ptr<Random>& random) noexcept
+    : algorithm_(algorithm), stepFunction_(stepFunction),
+    problem_(&problem), iterations_(iterations), random_(random)
 {
 }
 
@@ -98,20 +99,14 @@ std::unique_ptr<Search> SearchBuilder::buildSearch() const
     case Configuration::Algorithm::VND:
         return std::make_unique<Vnd>(buildRandomConstruction(), buildVndSteps());
 
-    case Configuration::Algorithm::ACO:
-        return std::make_unique<Aco>(); // not implemented yet
+    case Configuration::Algorithm::MCO:
+        return nullptr; //  std::make_unique<Mco>(); // not implemented yet
 
     default:
         assert(0);
         return {};
 
     }
-}
-
-std::default_random_engine SearchBuilder::buildRandom() const
-{
-    const auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-    return std::default_random_engine{ static_cast<std::default_random_engine::result_type>(seed) };
 }
 
 std::unique_ptr<DeterministicConstruction> SearchBuilder::buildDeterministicConstruction() const
@@ -123,7 +118,7 @@ std::unique_ptr<DeterministicConstruction> SearchBuilder::buildDeterministicCons
 
 std::unique_ptr<RandomConstruction> SearchBuilder::buildRandomConstruction() const
 {
-    auto selector = RandomSelector(buildRandom());
+    auto selector = RandomSelector(random_);
     auto inserter = BestTourInserter();
     return std::make_unique<RandomConstruction>(selector, inserter);
 }
@@ -153,8 +148,7 @@ std::unique_ptr<Step> SearchBuilder::buildStep(std::unique_ptr<Neighborhood> nei
     switch (stepFunction_) {
 
     case Configuration::StepFunction::RANDOM:
-        using StepRandomImpl = StepRandom<std::default_random_engine>;
-        return std::make_unique<StepRandomImpl>(move(neighborhood), buildRandom());
+        return std::make_unique<StepRandom>(move(neighborhood), random_);
 
     case Configuration::StepFunction::FIRST_IMPROVEMENT:
         return std::make_unique<FirstImprovement>(move(neighborhood));

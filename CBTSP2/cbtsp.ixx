@@ -6,11 +6,13 @@ module;
 #include <string>
 #include <cstdint>
 #include <vector>
+#include <random>
 
 export module cbtsp;
 
-export using Vertex = unsigned int;
-export using Value = std::int64_t;
+export using Vertex = unsigned int; //!< type for graph nodes
+export using Value = std::int64_t; //!< type for graph edges
+export using Random = std::default_random_engine; //!< global type of random number generator
 
 /**
  * Represents an edge with an associated move value in the CBTSP instance.
@@ -144,6 +146,11 @@ public:
      * @return: objective value
      */
     Value objective() const noexcept;
+
+    /**
+     * Compare this solution with another solution in terms of objective.
+     */
+    bool operator<(const Solution& rhs) const noexcept;
 
     /**
      * Get the tour length of the solution.

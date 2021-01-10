@@ -4,8 +4,11 @@ module;
 #include <algorithm>
 #include <numeric>
 #include <ranges>
+#include <memory>
 #include <utility>
 #include <vector>
+#include <random>
+#include <cassert>
 
 module construction;
 
@@ -21,6 +24,19 @@ std::vector<Vertex> selectables(const Problem& problem, const Solution& partialS
     std::ranges::set_difference(all, unselectable, selectable.begin());
 
     return selectable;
+}
+
+RandomSelector::RandomSelector(const std::shared_ptr<Random>& random) noexcept
+    : random_(random)
+{
+    assert(random);
+}
+
+Vertex RandomSelector::select(const Problem& problem, const Solution& partialSolution)
+{
+    const auto selectable = selectables(problem, partialSolution);
+    const auto distribution = std::uniform_int_distribution{ 0ull, selectable.size() - 1 };
+    return selectable[distribution(*random_)];
 }
 
 Vertex FarthestCitySelector::select(const Problem& problem, const Solution& partialSolution)

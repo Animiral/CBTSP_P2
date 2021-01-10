@@ -19,7 +19,7 @@ Solution Vnd::search(const Problem& problem)
         Solution candidate = best;
         steps_[level]->step(candidate);
 
-        if (candidate.objective() < best.objective()) {
+        if (candidate < best) {
             best = std::move(candidate);
             level = 0;
         }

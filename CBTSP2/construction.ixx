@@ -22,18 +22,17 @@ std::vector<Vertex> selectables(const Problem& problem, const Solution& partialS
  *
  * The next vertex which is not part of the solution is chosen at random according to the given RNG.
  */
-export template<typename Rng> class RandomSelector
+export class RandomSelector
 {
 
 public:
 
     /**
      * Construct a random selection strategy that takes random numbers from the given generator.
+     *
+     * @param random: standard random number generator to take random numbers from
      */
-    explicit RandomSelector(const Rng& rng)
-        : rng_(rng)
-    {
-    }
+    explicit RandomSelector(const std::shared_ptr<Random>& random) noexcept;
 
     /**
      * Choose any random next vertex from the instance which is not yet part of the solution.
@@ -42,16 +41,11 @@ public:
      * @param partialSolution: partial Solution object
      * @return: random next vertex
      */
-    Vertex select(const Problem& problem, const Solution& partialSolution)
-    {
-        const auto selectable = selectables(problem, partialSolution);
-        const auto distribution = std::uniform_int_distribution{ 0ull, selectable.size() - 1 };
-        return selectable[distribution(rng_)];
-    }
+    Vertex select(const Problem& problem, const Solution& partialSolution);
 
 private:
 
-    Rng rng_;
+    std::shared_ptr<Random> random_;
 
 };
 
@@ -177,7 +171,7 @@ private:
 
 };
 
-export using RandomConstruction = SelectInsertConstruction<RandomSelector<std::default_random_engine>>;
+export using RandomConstruction = SelectInsertConstruction<RandomSelector>;
 export using DeterministicConstruction = SelectInsertConstruction<FarthestCitySelector>;
 
 /**

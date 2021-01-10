@@ -18,7 +18,7 @@ Solution Grasp::search(const Problem& problem)
 
     for (int i = 1; i < iterations_; i++) {
         Solution candidate = localSearch_.search(construction_->construct(problem));
-        if (candidate.objective() < solution.objective()) {
+        if (candidate < solution) {
             solution = std::move(candidate);
         }
     }

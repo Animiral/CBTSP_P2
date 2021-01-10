@@ -175,6 +175,11 @@ Value Solution::objective() const noexcept
     return std::abs(value_);
 }
 
+bool Solution::operator<(const Solution& rhs) const noexcept
+{
+    return objective() < rhs.objective();
+}
+
 std::size_t Solution::length() const noexcept
 {
     return vertices_.size();

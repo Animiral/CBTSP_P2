@@ -1,10 +1,10 @@
 // tests for Ant Colony Optimization
 #include "gtest/gtest.h"
 
-import aco;
+import mco;
 
 // TODO: Implement some tests
-TEST(Aco, BasicRun)
+TEST(Mco, BasicRun)
 {
 	// TODO: implementation
 }

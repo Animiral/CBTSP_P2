@@ -49,11 +49,26 @@ export class SearchBuilder
 
 public:
 
+    /**
+     * Initialize the builder with the given components.
+     *
+     * @param algorithm: choice of search heuristic
+     * @param stepFunction: choice of neighborhood step function
+     * @param problem: CBTSP instance to search in
+     * @param iterations: number of iterations for GRASP and MCO
+     * @param random: random number generator
+     */
     explicit SearchBuilder(Configuration::Algorithm algorithm,
         Configuration::StepFunction stepFunction,
-        const Problem& problem_,
-        int iterations) noexcept;
+        const Problem& problem,
+        int iterations,
+        const std::shared_ptr<Random>& random) noexcept;
 
+    /**
+     * Construct the search object with the given parameters.
+     *
+     * @return: the search algorithm object
+     */
     std::unique_ptr<Search> buildSearch() const;
 
 private:
@@ -62,8 +77,8 @@ private:
     Configuration::StepFunction stepFunction_;
     const Problem* problem_;
     int iterations_;
+    std::shared_ptr<Random> random_;
 
-    std::default_random_engine buildRandom() const;
     std::unique_ptr<DeterministicConstruction> buildDeterministicConstruction() const;
     std::unique_ptr<RandomConstruction> buildRandomConstruction() const;
     std::unique_ptr<Neighborhood> buildFullNeighborhood() const;

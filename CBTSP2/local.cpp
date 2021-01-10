@@ -3,6 +3,7 @@ module;
 #include <limits>
 #include <memory>
 #include <utility>
+#include <random>
 #include <cassert>
 
 module local;
@@ -118,6 +119,33 @@ void BestImprovement::step(Solution& base)
 
     if(bestNeighbor)
         bestNeighbor->apply(base);
+}
+
+StepRandom::StepRandom(std::unique_ptr<Neighborhood> neighborhood,
+    const std::shared_ptr<Random>& random) noexcept
+    : Step(move(neighborhood)), random_(random)
+{
+    assert(random);
+}
+
+void StepRandom::step(Solution& base)
+{
+    // extremely stupid count, since neighborhood does not know its own size
+    int neighbors = 0;
+
+    for (auto ns = neighborhood_->clone(); *ns != std::default_sentinel; ++*ns)
+        neighbors++;
+
+    if (neighbors > 0) {
+        const auto distribution = std::uniform_int_distribution{ 0, neighbors - 1 };
+        const int choice = distribution(*random_);
+        auto ns = neighborhood_->clone();
+
+        for (int i = 0; i < choice; i++)
+            ++* ns;
+
+        ns->apply(base);
+    }
 }
 
 LocalSearch::LocalSearch(std::unique_ptr<Step> step) noexcept

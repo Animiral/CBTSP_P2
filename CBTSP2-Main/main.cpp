@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <random>
+#include <chrono>
 
 import cbtsp;
 import config;
@@ -18,6 +20,10 @@ int run(int argc, const char* argv[])
         return {};
     }
 
+    // random number setup
+    const auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    auto random = std::make_shared<Random>(static_cast<Random::result_type>(seed));
+
     for (const auto inputFile : configuration.inputFiles()) {
         std::cout << "Loading problem: " << inputFile.filename() << " - ";
         const auto problem = readProblemFile(inputFile);
@@ -26,7 +32,8 @@ int run(int argc, const char* argv[])
         const auto searchBuilder = SearchBuilder(configuration.algorithm(),
             configuration.stepFunction(),
             problem,
-            configuration.iterations());
+            configuration.iterations(),
+            random);
 
         const auto search = searchBuilder.buildSearch();
 

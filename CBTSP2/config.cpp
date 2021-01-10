@@ -58,7 +58,7 @@ struct Parser
         if ("local-search"s == opt)      return Configuration::Algorithm::LOCAL_SEARCH;
         if ("grasp"s == opt)             return Configuration::Algorithm::GRASP;
         if ("vnd"s == opt)               return Configuration::Algorithm::VND;
-        if ("aco"s == opt)               return Configuration::Algorithm::ACO;
+        if ("mco"s == opt)               return Configuration::Algorithm::MCO;
 
         throw std::out_of_range("Unknown algorithm: "s + opt);
     }

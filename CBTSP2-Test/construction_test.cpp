@@ -26,14 +26,8 @@ protected:
 // Ensure that vertex selection happens according to the RNG.
 TEST_F(ConstructionTest, SelectRandom)
 {
-    struct
-    {
-        using result_type = unsigned int;
-        static result_type min() { return 0; }
-        static result_type max() { return 1000; }
-        result_type operator()() { return 4; } // chosen by fair dice roll. guaranteed to be random.
-    } mockRng;
-    auto selector = RandomSelector(mockRng);
+    auto random = std::make_shared<Random>();
+    auto selector = RandomSelector(random);
     auto partialSolution = Solution(problem, { 0, 2 });
     Vertex availables[] = { 1, 3, 4 };
 
@@ -73,7 +67,8 @@ TEST_F(ConstructionTest, BestTourInserter)
 // Ensure that random construction results in a full-length solution.
 TEST_F(ConstructionTest, ConstructRandom)
 {
-    auto selector = RandomSelector(std::default_random_engine{});
+    auto random = std::make_shared<Random>();
+    auto selector = RandomSelector(random);
     auto inserter = BestTourInserter();
     auto construction = RandomConstruction(selector, inserter);
     auto solution = construction.construct(problem);

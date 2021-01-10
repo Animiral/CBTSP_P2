@@ -24,7 +24,7 @@ public:
     /**
      * Enumeration of available heuristics to run as the main mode of the program.
      */
-    enum class Algorithm { DET_CONSTRUCTION, RAND_CONSTRUCTION, LOCAL_SEARCH, GRASP, VND, ACO };
+    enum class Algorithm { DET_CONSTRUCTION, RAND_CONSTRUCTION, LOCAL_SEARCH, GRASP, VND, MCO };
 
     /**
      * Get the configured algorithm.

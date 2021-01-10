@@ -220,7 +220,7 @@ public:
 /**
  * Random step function.
  */
-export template<typename Rng> class StepRandom : public Step
+export class StepRandom : public Step
 {
 
 public:
@@ -229,39 +229,19 @@ public:
      * Construct the random step function for the given neighborhood.
      *
      * @param neighborhood: walk randomly among this neighborhood
-     * @param rng: standard random number generator to take random numbers from
+     * @param random: standard random number generator to take random numbers from
      */
-    explicit StepRandom(std::unique_ptr<Neighborhood> neighborhood, const Rng& rng) noexcept
-        : Step(move(neighborhood)), rng_(rng)
-    {
-    }
+    explicit StepRandom(std::unique_ptr<Neighborhood> neighborhood,
+        const std::shared_ptr<Random>& random) noexcept;
 
     /**
      * Modify the solution to a random neighbor.
      */
-    virtual void step(Solution& base) override
-    {
-        // extremely stupid count, since neighborhood does not know its own size
-        int neighbors = 0;
-
-        for (auto ns = neighborhood_->clone(); *ns != std::default_sentinel; ++ * ns)
-            neighbors++;
-
-        if (neighbors > 0) {
-            const auto distribution = std::uniform_int_distribution{ 0, neighbors - 1 };
-            const int choice = distribution(rng_);
-            auto ns = neighborhood_->clone();
-
-            for (int i = 0; i < choice; i++)
-                ++* ns;
-
-            ns->apply(base);
-        }
-    }
+    virtual void step(Solution& base) override;
 
 private:
 
-    Rng rng_;
+    std::shared_ptr<Random> random_;
 
 };
 
