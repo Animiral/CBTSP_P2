@@ -82,9 +82,16 @@ Vertex FarthestCitySelector::select(const Problem& problem, const Solution& part
 
 void BestTourInserter::insert(const Problem& problem, Solution& partialSolution, Vertex nextVertex) const
 {
+    const auto length = partialSolution.length();
+
+    if (length < 2) {
+        partialSolution.insert(0, nextVertex);
+        return;
+    }
+
     // get a list of all possible inserts
-    auto evaluation = std::vector<Value>(partialSolution.length());
-    for (std::size_t i = 0; i < partialSolution.length(); i++) {
+    auto evaluation = std::vector<Value>(length);
+    for (std::size_t i = 0; i < length; i++) {
         evaluation[i] = tourObjective(problem, partialSolution, nextVertex, i);
     }
 

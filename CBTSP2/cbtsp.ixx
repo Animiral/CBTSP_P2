@@ -7,12 +7,98 @@ module;
 #include <cstdint>
 #include <vector>
 #include <random>
+#include <algorithm>
+#include <cassert>
 
 export module cbtsp;
 
 export using Vertex = unsigned int; //!< type for graph nodes
 export using Value = std::int64_t; //!< type for graph edges
 export using Random = std::default_random_engine; //!< global type of random number generator
+
+/**
+ * Edge attribute container tailored to our undirected, no-loop graph.
+ * Every edge can be assigned a value using minimal storage.
+ * The value can be looked-up using the edge endpoints.
+ */
+export template<typename T> class EdgeTable
+{
+
+public:
+
+    /**
+     * Construct the table for the given number of vertices in the graph
+     * and with the given initial value.
+     *
+     * @param vertices: number of vertices in the graph
+     * @param init: inital edge value
+     */
+    explicit EdgeTable(std::size_t vertices, T init)
+        : values_((vertices* vertices + vertices) / 2, init)
+    {
+    }
+
+    /**
+     * Look up the mutable edge value from a to b.
+     *
+     * @param a: first edge endpoint
+     * @param b: second edge endpoint
+     * @return: reference to the value of the edge {a, b}
+     */
+    T& at(Vertex a, Vertex b) noexcept
+    {
+        return values_[index(a, b)];
+    }
+
+    /**
+     * Look up the edge value from a to b.
+     *
+     * @param a: first edge endpoint
+     * @param b: second edge endpoint
+     * @return: value of the edge {a, b}
+     */
+    T at(Vertex a, Vertex b) const noexcept
+    {
+        return values_[index(a, b)];
+    }
+
+    /**
+     * Access the complete mutable value list.
+     *
+     * @return: reference to the internal value storage
+     */
+    std::vector<T>& all() noexcept
+    {
+        return values_;
+    }
+
+    /**
+     * Access the complete value list.
+     *
+     * @return: reference to the internal value storage
+     */
+    const std::vector<T>& all() const noexcept
+    {
+        return values_;
+    }
+
+private:
+
+    std::vector<T> values_;
+
+    /**
+     * Determine the index of the given edge in the storage.
+     */
+    std::size_t index(Vertex a, Vertex b) const noexcept
+    {
+        const auto [lo, hi] = std::minmax(a, b);
+        assert(lo < hi);
+        auto result = (hi * hi - hi) / 2 + lo;
+        assert(result < values_.size());
+        return result;
+    }
+
+};
 
 /**
  * Represents an edge with an associated move value in the CBTSP instance.
@@ -90,7 +176,7 @@ private:
 
     std::size_t vertices_; //!< integer n of nodes in the instance, each identified by their number [0 : n - 1]
     Value big_m_; //!< value which is returned for edges between vertices that are not connected
-    std::vector<Value> lookup_; //!< table of edge values
+    EdgeTable<Value> lookup_; //!< table of edge values
 
 };
 

@@ -11,27 +11,24 @@ module mco;
 
 import cbtsp;
 
-McoState::McoState(const Problem& problem) : vertices_(problem.vertices())
+McoState::McoState(const Problem& problem)
+    : vertices_(problem.vertices()), pheromone_(vertices_, 0.f), delta_(vertices_, 0.f)
 {
-    std::size_t edgeTableSize = vertices_ * vertices_;
-    pheromone_.resize(edgeTableSize, 0.f);
-    delta_.resize(edgeTableSize, 0.f);
 }
 
 const Pheromone& McoState::pheromone(Vertex a, Vertex b) const noexcept
 {
-    return pheromone_[a * vertices_ + b];
+    return pheromone_.at(a, b);
 }
 
 void McoState::reinforce(Vertex a, Vertex b, Pheromone delta) noexcept
 {
-    delta_[a * vertices_ + b] += delta;
-    delta_[b * vertices_ + a] += delta;
+    delta_.at(a, b) += delta;
 }
 
 void McoState::evaporate(float evaporation) noexcept
 {
-    for (Pheromone& p : pheromone_)
+    for (Pheromone& p : pheromone_.all())
     {
         p *= (1.f - evaporation);
     }
@@ -39,11 +36,14 @@ void McoState::evaporate(float evaporation) noexcept
 
 void McoState::update() noexcept
 {
-    for (std::size_t i = 0; i < pheromone_.size(); i++) {
-        pheromone_[i] += delta_[i];
+    auto& pheromone = pheromone_.all();
+    auto& delta = delta_.all();
+
+    for (std::size_t i = 0; i < pheromone.size(); i++) {
+        pheromone[i] += delta[i];
     }
 
-    std::ranges::fill(delta_, 0.f);
+    std::ranges::fill(delta, 0.f);
 }
 
 Mouse::Mouse(const Problem& problem, McoState& state,

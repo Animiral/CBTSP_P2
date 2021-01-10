@@ -16,7 +16,7 @@ module cbtsp;
 import util;
 
 Problem::Problem(std::size_t vertices, Value bigM)
-    : vertices_(vertices), big_m_(bigM), lookup_(vertices * vertices, bigM)
+    : vertices_(vertices), big_m_(bigM), lookup_(vertices, bigM)
 {
     if (vertices < 3)
         throw std::invalid_argument("A valid instance consists of at least 3 vertices.");
@@ -43,13 +43,10 @@ void Problem::addEdge(Edge edge)
     if (edge.a == edge.b)
         throw std::invalid_argument(format("Looping edges (vertex {}) are forbidden.", edge.a));
 
-    const std::size_t indexAB = edge.a * vertices_ + edge.b;
-    const std::size_t indexBA = edge.b * vertices_ + edge.a;
-
-    if (big_m_ != lookup_[indexAB] || big_m_ != lookup_[indexBA])
+    if (big_m_ != lookup_.at(edge.a, edge.b))
         throw std::invalid_argument(format("Duplicate edge ({} - {}).", edge.a, edge.b));
 
-    lookup_[indexAB] = lookup_[indexBA] = edge.value;
+    lookup_.at(edge.a, edge.b) = edge.value;
 }
 
 Value Problem::value(Vertex start, Vertex end) const
@@ -57,7 +54,7 @@ Value Problem::value(Vertex start, Vertex end) const
     assert(start < vertices_);
     assert(end < vertices_);
 
-    return lookup_[start * vertices_ + end];
+    return lookup_.at(start, end);
 }
 
 Problem Problem::fromText(std::string text)

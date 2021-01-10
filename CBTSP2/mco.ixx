@@ -48,8 +48,8 @@ public:
 private:
 
     std::size_t vertices_; //!< problem size
-    std::vector<Pheromone> pheromone_; //!< current pheromone levels for every edge
-    std::vector<Pheromone> delta_; //!< upcoming pheromone update
+    EdgeTable<Pheromone> pheromone_; //!< current pheromone levels for every edge
+    EdgeTable<Pheromone> delta_; //!< upcoming pheromone update
 
 };
 
