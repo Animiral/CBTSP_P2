@@ -1,11 +1,44 @@
 // tests for the Mouse Colony Optimization
 #include "gtest/gtest.h"
+#include <memory>
 
 import mco;
 import cbtsp;
+import local;
+
+class McoTest : public ::testing::Test
+{
+
+protected:
+
+    // sensible parameters for all tests
+    int ticks = 100; // number of iterations on a stagnated solution before termination
+    int mice = 100; // number of traversals within a tick to construct solution candidates
+    float evaporation = .1f; // fraction of pheromone decrease per tick
+    float pheromoneAttraction = 10.f; // to which degree local pheromones attract
+    float objectiveAttraction = 1.f; // to which degree local objective value attracts
+    std::shared_ptr<Random> random = std::make_shared<Random>(); // random number generator
+
+    Mco buildMco(std::size_t vertices) const
+    {
+        auto improvement = buildImprovement(vertices);
+        return Mco(ticks, mice, evaporation,
+            pheromoneAttraction, objectiveAttraction,
+            random, move(improvement));
+    }
+
+    // construct the improvement heuristic
+    static std::unique_ptr<LocalSearch> buildImprovement(std::size_t vertices)
+    {
+        auto neighborhood = std::make_unique<TwoExchangeNeighborhood>(vertices);
+        auto step = std::make_unique<BestImprovement>(move(neighborhood));
+        return std::make_unique<LocalSearch>(move(step));
+    }
+
+};
 
 // Test that MCO can find a feasible solution, if available.
-TEST(Mco, BasicRun)
+TEST_F(McoTest, BasicRun)
 {
     // We provide a small problem with few edges.
     // It should not be hard to find a solution using the available edges.
@@ -17,20 +50,13 @@ TEST(Mco, BasicRun)
     problem.addEdge({ 4, 0, -200 });
     problem.addEdge({ 0, 2, -500 });
 
-    int ticks = 1000; // number of iterations on a stagnated solution before termination
-    int mice = 100; // number of traversals within a tick to construct solution candidates
-    float evaporation = .1f; // fraction of pheromone decrease per tick
-    float pheromoneAttraction = 10.f; // to which degree local pheromones attract
-    float objectiveAttraction = 1.f; // to which degree local objective value attracts
-    auto random = std::make_shared<Random>(); // random number generator
-
-    auto mco = Mco(ticks, mice, evaporation, pheromoneAttraction, objectiveAttraction, random);
+    auto mco = buildMco(problem.vertices());
     const Solution actual = mco.search(problem);
     EXPECT_TRUE(actual.isFeasible());
 }
 
 // Test that MCO can find a good solution, if available.
-TEST(Mco, EasyRun)
+TEST_F(McoTest, EasyRun)
 {
     // We provide a problem instance with lots of edges,
     // but only one truly excellent solution.
@@ -58,15 +84,7 @@ TEST(Mco, EasyRun)
     problem.addEdge({ 2, 5, 1202 });
 
     const auto optimum = Solution{ problem, {0, 1, 2, 3, 4, 5} };
-
-    int ticks = 1000; // number of iterations on a stagnated solution before termination
-    int mice = 100; // number of traversals within a tick to construct solution candidates
-    float evaporation = .1f; // fraction of pheromone decrease per tick
-    float pheromoneAttraction = 10.f; // to which degree local pheromones attract
-    float objectiveAttraction = 1.f; // to which degree local objective value attracts
-    auto random = std::make_shared<Random>(); // random number generator
-
-    auto mco = Mco(ticks, mice, evaporation, pheromoneAttraction, objectiveAttraction, random);
+    auto mco = buildMco(problem.vertices());
 
     Solution actual = mco.search(problem);
     actual.normalize();
@@ -74,7 +92,7 @@ TEST(Mco, EasyRun)
 }
 
 // Test that MCO is good at finding the best solution.
-TEST(Mco, QualityRun)
+TEST_F(McoTest, QualityRun)
 {
     // We provide a problem instance with lots of edges and lots of solutions
     // with rather similar values (<5% difference).
@@ -103,15 +121,7 @@ TEST(Mco, QualityRun)
     problem.addEdge({ 2, 5, 202 });
 
     const auto optimum = Solution{ problem, {0, 1, 2, 3, 4, 5} };
-
-    int ticks = 100; // number of iterations on a stagnated solution before termination
-    int mice = 100; // number of traversals within a tick to construct solution candidates
-    float evaporation = .5f; // fraction of pheromone decrease per tick
-    float pheromoneAttraction = 1000.f; // to which degree local pheromones attract
-    float objectiveAttraction = 1.f; // to which degree local objective value attracts
-    auto random = std::make_shared<Random>(); // random number generator
-
-    auto mco = Mco(ticks, mice, evaporation, pheromoneAttraction, objectiveAttraction, random);
+    auto mco = buildMco(problem.vertices());
 
     Solution actual = mco.search(problem);
     actual.normalize();

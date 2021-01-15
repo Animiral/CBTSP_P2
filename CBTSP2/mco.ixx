@@ -9,6 +9,7 @@ module;
 export module mco;
 
 import cbtsp;
+import local;
 
 using Pheromone = float;
 
@@ -28,7 +29,7 @@ public:
     /**
      * Look up the pheromone in the lookup vector.
      */
-    const Pheromone& pheromone(Vertex a, Vertex b) const noexcept;
+    Pheromone pheromone(Vertex a, Vertex b) const noexcept;
 
     /**
      * Spread pheromones along the solution edges based on the objective value.
@@ -121,10 +122,11 @@ public:
      * @param pheromoneAttraction: to which degree local pheromones attract
      * @param objectiveAttraction: to which degree local objective value attracts
      * @param random: random number generator
+     * @param improvement: improvement heuristic to apply after Mouse construction
      */
     explicit Mco(int ticks, int mice, float evaporation,
         float pheromoneAttraction, float objectiveAttraction,
-        const std::shared_ptr<Random>& random) noexcept;
+        const std::shared_ptr<Random>& random, std::unique_ptr<LocalSearch> improvement) noexcept;
 
     /**
      * Execute the MCO scheme for the given problem.
@@ -142,5 +144,6 @@ private:
     float pheromoneAttraction_; // to which degree local pheromones attract
     float objectiveAttraction_; // to which degree local objective value attracts
     std::shared_ptr<Random> random_; //!< random number generator
+    std::unique_ptr<LocalSearch> improvement_; //!< improvement heuristic
 
 };

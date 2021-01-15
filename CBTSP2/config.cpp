@@ -29,7 +29,7 @@ struct Parser
         return *++argv;
     }
 
-    enum class Token { LITERAL, ALGORITHM, STEP, ITERATIONS, RUNS, STATS_OUT };
+    enum class Token { LITERAL, ALGORITHM, STEP, ITERATIONS, POPSIZE, RUNS, STATS_OUT };
 
     Token what() const
     {
@@ -41,6 +41,7 @@ struct Parser
         if ("-a"s == opt || "--algorithm"s == opt)  return Token::ALGORITHM;
         if ("-s"s == opt || "--step"s == opt)       return Token::STEP;
         if ("-i"s == opt || "--iterations"s == opt) return Token::ITERATIONS;
+        if ("-p"s == opt || "--popsize"s == opt)    return Token::POPSIZE;
         if ("-r"s == opt || "--runs"s == opt)       return Token::RUNS;
         if ("-d"s == opt || "--dump"s == opt)       return Token::STATS_OUT;
 
@@ -104,6 +105,7 @@ void Configuration::readArgv(int argc, const char* argv[])
         case Parser::Token::ALGORITHM:    algorithm_ = parser.algorithm(); break;
         case Parser::Token::STEP:         stepFunction_ = parser.stepFunction(); break;
         case Parser::Token::ITERATIONS:   iterations_ = parser.intArg(); break;
+        case Parser::Token::POPSIZE:      popsize_ = parser.intArg(); break;
         case Parser::Token::RUNS:         runs_ = parser.intArg(); break;
         case Parser::Token::STATS_OUT:    statsOutfile_ = parser.pathArg(); break;
         default: assert(0);
@@ -127,6 +129,11 @@ Configuration::StepFunction Configuration::stepFunction() const noexcept
 int Configuration::iterations() const noexcept
 {
     return iterations_;
+}
+
+int Configuration::popsize() const noexcept
+{
+    return popsize_;
 }
 
 int Configuration::runs() const noexcept

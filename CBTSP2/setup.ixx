@@ -56,12 +56,14 @@ public:
      * @param stepFunction: choice of neighborhood step function
      * @param problem: CBTSP instance to search in
      * @param iterations: number of iterations for GRASP and MCO
+     * @param popsize: number of mice in an iteration of MCO
      * @param random: random number generator
      */
     explicit SearchBuilder(Configuration::Algorithm algorithm,
         Configuration::StepFunction stepFunction,
         const Problem& problem,
         int iterations,
+        int popsize,
         const std::shared_ptr<Random>& random) noexcept;
 
     /**
@@ -73,11 +75,18 @@ public:
 
 private:
 
+    // configurable search parameters
     Configuration::Algorithm algorithm_;
     Configuration::StepFunction stepFunction_;
     const Problem* problem_;
     int iterations_;
+    int popsize_;
     std::shared_ptr<Random> random_;
+
+    // pre-tuned search parameters
+    constexpr static float evaporation_ = .1f; // MCO: fraction of pheromone decrease per tick
+    constexpr static float pheromoneAttraction_ = 10.f; // MCO: to which degree local pheromones attract
+    constexpr static float objectiveAttraction_ = 1.f; //  MCO: to which degree local objective value attracts
 
     std::unique_ptr<DeterministicConstruction> buildDeterministicConstruction() const;
     std::unique_ptr<RandomConstruction> buildRandomConstruction() const;
@@ -87,5 +96,6 @@ private:
     std::unique_ptr<Neighborhood> buildWideNeighborhood() const;
     std::unique_ptr<Step> buildStep(std::unique_ptr<Neighborhood> neighborhood) const;
     std::vector<std::unique_ptr<Step>> buildVndSteps() const;
+    std::unique_ptr<LocalSearch> buildImprovement() const;
 
 };

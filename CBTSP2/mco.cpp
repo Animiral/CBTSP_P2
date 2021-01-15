@@ -16,7 +16,7 @@ McoState::McoState(const Problem& problem)
 {
 }
 
-const Pheromone& McoState::pheromone(Vertex a, Vertex b) const noexcept
+Pheromone McoState::pheromone(Vertex a, Vertex b) const noexcept
 {
     return pheromone_.at(a, b);
 }
@@ -111,16 +111,17 @@ std::size_t Mouse::decideNext(const Solution& solution, std::size_t position)
 
 Mco::Mco(int ticks, int mice, float evaporation,
     float pheromoneAttraction, float objectiveAttraction,
-    const std::shared_ptr<Random>& random) noexcept
+    const std::shared_ptr<Random>& random, std::unique_ptr<LocalSearch> improvement) noexcept
     : ticks_(ticks), mice_(mice), evaporation_(evaporation),
     pheromoneAttraction_(pheromoneAttraction), objectiveAttraction_(objectiveAttraction),
-    random_(random)
+    random_(move(random)), improvement_(move(improvement))
 {
     assert(ticks > 0);
     assert(mice > 0);
     assert(evaporation >= 0.f);
     assert(evaporation <= 1.f);
-    assert(random);
+    assert(random_);
+    assert(improvement_);
 }
 
 Solution Mco::search(const Problem& problem)
@@ -133,8 +134,10 @@ Solution Mco::search(const Problem& problem)
 
     while (countdown-- > 0) {
         for (std::size_t i = 0; i < mice_; i++) {
-            candidates[i] = mouse.construct();
-            state.reinforce(candidates[i]);
+            const auto constructed = mouse.construct();
+            const auto improved = improvement_->search(std::move(constructed));
+            state.reinforce(improved);
+            candidates[i] = std::move(improved);
 
             if (candidates[i] < best) {
                 best = candidates[i];

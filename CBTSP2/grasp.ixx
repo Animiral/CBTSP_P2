@@ -28,10 +28,11 @@ public:
      * Construct the search.
      *
      * @param construction: construction heuristic, must be randomized
-     * @param localSearch: local search algorithm
+     * @param improvement: improvement heuristic a.k.a. local search
      * @param iterations: number of random constructions to consider
      */
-    explicit Grasp(std::unique_ptr<Construction> construction, LocalSearch&& localSearch, int iterations) noexcept;
+    explicit Grasp(std::unique_ptr<Construction> construction,
+        std::unique_ptr<LocalSearch> improvement, int iterations) noexcept;
 
     /**
      * Execute the GRASP search scheme for the given problem.
@@ -44,7 +45,7 @@ public:
 private:
 
     std::unique_ptr<Construction> construction_;
-    LocalSearch localSearch_;
+    std::unique_ptr<LocalSearch> improvement_;
     int iterations_;
 
 };

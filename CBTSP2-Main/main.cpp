@@ -33,6 +33,7 @@ int run(int argc, const char* argv[])
             configuration.stepFunction(),
             problem,
             configuration.iterations(),
+            configuration.popsize(),
             random);
 
         const auto search = searchBuilder.buildSearch();

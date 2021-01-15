@@ -47,6 +47,11 @@ public:
     int iterations() const noexcept;
 
     /**
+     * Get the configured number of mice for MCO.
+     */
+    int popsize() const noexcept;
+
+    /**
      * Get the configured number of runs for sampling run time.
      */
     int runs() const noexcept;
@@ -66,6 +71,7 @@ private:
     Algorithm algorithm_ = Algorithm::GRASP;
     StepFunction stepFunction_ = StepFunction::BEST_IMPROVEMENT;
     int iterations_ = 100;
+    int popsize_ = 100;
     int runs_ = 100;
     std::filesystem::path statsOutfile_;
     std::vector<std::filesystem::path> inputFiles_;

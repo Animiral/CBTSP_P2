@@ -60,9 +60,9 @@ TEST(Grasp, BasicRun)
 
     auto neighborhood = std::make_unique<TwoExchangeNeighborhood>(6, 2, 2);
     auto step = std::make_unique<BestImprovement>(move(neighborhood));
-    auto localSearch = LocalSearch(move(step));
+    auto localSearch = std::make_unique<LocalSearch>(move(step));
 
-    auto grasp = Grasp(move(mockConstruction), std::move(localSearch), 3);
+    auto grasp = Grasp(move(mockConstruction), move(localSearch), 3);
     Solution actual = grasp.search(problem);
     actual.normalize();
     EXPECT_EQ(actual.vertices(), globalOpt.vertices());

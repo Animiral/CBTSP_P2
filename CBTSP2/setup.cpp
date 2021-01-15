@@ -72,9 +72,11 @@ SearchBuilder::SearchBuilder(Configuration::Algorithm algorithm,
     Configuration::StepFunction stepFunction,
     const Problem& problem,
     int iterations,
+    int popsize,
     const std::shared_ptr<Random>& random) noexcept
     : algorithm_(algorithm), stepFunction_(stepFunction),
-    problem_(&problem), iterations_(iterations), random_(random)
+    problem_(&problem), iterations_(iterations),
+    popsize_(popsize), random_(random)
 {
 }
 
@@ -94,13 +96,15 @@ std::unique_ptr<Search> SearchBuilder::buildSearch() const
 
     case Configuration::Algorithm::GRASP:
         return std::make_unique<Grasp>(buildRandomConstruction(),
-            LocalSearch(buildStep(buildFullNeighborhood())), iterations_);
+            buildImprovement(), iterations_);
 
     case Configuration::Algorithm::VND:
         return std::make_unique<Vnd>(buildRandomConstruction(), buildVndSteps());
 
     case Configuration::Algorithm::MCO:
-        return nullptr; //  std::make_unique<Mco>(); // not implemented yet
+        return std::make_unique<Mco>(iterations_, popsize_, evaporation_,
+            pheromoneAttraction_, objectiveAttraction_,
+            random_, buildImprovement());
 
     default:
         assert(0);
@@ -170,4 +174,9 @@ std::vector<std::unique_ptr<Step>> SearchBuilder::buildVndSteps() const
     steps.push_back(buildStep(buildNarrowNeighborhood()));
     steps.push_back(buildStep(buildWideNeighborhood()));
     return steps;
+}
+
+std::unique_ptr<LocalSearch> SearchBuilder::buildImprovement() const
+{
+    return std::make_unique<LocalSearch>(buildStep(buildFullNeighborhood()));
 }
