@@ -31,9 +31,11 @@ public:
     const Pheromone& pheromone(Vertex a, Vertex b) const noexcept;
 
     /**
-     * Add pheromone value to an edge to be applied at the next update.
+     * Spread pheromones along the solution edges based on the objective value.
+     *
+     * @param solution: complete solution object
      */
-    void reinforce(Vertex a, Vertex b, Pheromone delta) noexcept;
+    void reinforce(const Solution& solution) noexcept;
 
     /**
      * Lower pheromone intensity everywhere.

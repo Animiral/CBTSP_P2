@@ -21,9 +21,17 @@ const Pheromone& McoState::pheromone(Vertex a, Vertex b) const noexcept
     return pheromone_.at(a, b);
 }
 
-void McoState::reinforce(Vertex a, Vertex b, Pheromone delta) noexcept
+void McoState::reinforce(const Solution& solution) noexcept
 {
-    delta_.at(a, b) += delta;
+    assert(!solution.isPartial());
+
+    const Pheromone delta = 1.f / static_cast<Pheromone>(solution.objective());
+    const auto& vs = solution.vertices();
+    Vertex prev = vs.back();
+    for (auto v : vs) {
+        delta_.at(prev, v) += delta;
+        prev = v;
+    }
 }
 
 void McoState::evaporate(float evaporation) noexcept
@@ -76,15 +84,7 @@ Solution Mouse::construct()
         solution.twoOpt(i, (next + 1) % n);
     }
 
-    // we got our solution, now do reinforcement
-    const Pheromone delta = 1.f / static_cast<Pheromone>(solution.objective());
-    const auto& vs = solution.vertices();
-    Vertex prev = vs.back();
-    for (auto v : vs) {
-        state_->reinforce(prev, v, delta);
-        prev = v;
-    }
-
+    // Note: reinforcement to be handled by the caller
     return solution;
 }
 
@@ -134,6 +134,7 @@ Solution Mco::search(const Problem& problem)
     while (countdown-- > 0) {
         for (std::size_t i = 0; i < mice_; i++) {
             candidates[i] = mouse.construct();
+            state.reinforce(candidates[i]);
 
             if (candidates[i] < best) {
                 best = candidates[i];

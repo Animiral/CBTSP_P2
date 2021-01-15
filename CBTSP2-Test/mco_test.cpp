@@ -4,8 +4,33 @@
 import mco;
 import cbtsp;
 
-// Test that MCO can find a good solution, if available.
+// Test that MCO can find a feasible solution, if available.
 TEST(Mco, BasicRun)
+{
+    // We provide a small problem with few edges.
+    // It should not be hard to find a solution using the available edges.
+    auto problem = Problem{ 5, 10000l };
+    problem.addEdge({ 0, 1, 1000 });
+    problem.addEdge({ 1, 2, -1000 });
+    problem.addEdge({ 2, 3, 500 });
+    problem.addEdge({ 3, 4, 200 });
+    problem.addEdge({ 4, 0, -200 });
+    problem.addEdge({ 0, 2, -500 });
+
+    int ticks = 1000; // number of iterations on a stagnated solution before termination
+    int mice = 100; // number of traversals within a tick to construct solution candidates
+    float evaporation = .1f; // fraction of pheromone decrease per tick
+    float pheromoneAttraction = 10.f; // to which degree local pheromones attract
+    float objectiveAttraction = 1.f; // to which degree local objective value attracts
+    auto random = std::make_shared<Random>(); // random number generator
+
+    auto mco = Mco(ticks, mice, evaporation, pheromoneAttraction, objectiveAttraction, random);
+    const Solution actual = mco.search(problem);
+    EXPECT_TRUE(actual.isFeasible());
+}
+
+// Test that MCO can find a good solution, if available.
+TEST(Mco, EasyRun)
 {
     // We provide a problem instance with lots of edges,
     // but only one truly excellent solution.
