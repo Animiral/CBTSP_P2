@@ -46,6 +46,8 @@ TEST_F(LocalTest, TwoExchangeNeighborhood)
 
     auto it = TwoExchangeNeighborhood();
     it.reset(5);
+    ASSERT_EQ(5, it.size());
+
     for (; it != std::default_sentinel; ++it) {
         Solution s = it.applyCopy(solution);
         s.normalize();
@@ -53,8 +55,6 @@ TEST_F(LocalTest, TwoExchangeNeighborhood)
         ASSERT_NE(expected.end(), found);
         expected.erase(found);
     }
-
-    EXPECT_TRUE(expected.empty());
 }
 
 // Ensure that the vertex shift neighborhood (very narrow two-exchange neighborhood)
@@ -74,6 +74,8 @@ TEST_F(LocalTest, VertexShiftNeighborhood)
 
     auto it = TwoExchangeNeighborhood(2, 2);
     it.reset(5);
+    ASSERT_EQ(5, it.size());
+
     for (; it != std::default_sentinel; ++it) {
         Solution s = it.applyCopy(solution);
         s.normalize();

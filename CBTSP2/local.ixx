@@ -44,6 +44,12 @@ public:
     virtual void reset(std::size_t vertices) noexcept;
 
     /**
+     * Get the number of neighbors.
+     * This is currently the same for any base solution.
+     */
+    virtual std::size_t size() const noexcept = 0;
+
+    /**
      * Return a copy of this Neighborhood in its current state.
      */
     virtual std::unique_ptr<Neighborhood> clone() const = 0;
@@ -133,6 +139,7 @@ public:
     TwoExchangeNeighborhood(const TwoExchangeNeighborhood& rhs);
 
     void reset(std::size_t vertices) noexcept override;
+    std::size_t size() const noexcept override;
     std::unique_ptr<Neighborhood> clone() const override;
     TwoExchangeNeighborhood& operator++() override;
     Value objective(const Solution& base) const noexcept override;

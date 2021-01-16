@@ -39,6 +39,18 @@ void TwoExchangeNeighborhood::reset(std::size_t vertices) noexcept
     cut2_ = minl_;
 }
 
+std::size_t TwoExchangeNeighborhood::size() const noexcept
+{
+    const auto shortMaxl = std::min(maxl_, (vertices_ - 1) / 2); // shorter tour max length
+    const bool haveShort = shortMaxl >= minl_; // whether it is possible to cut a route within minl/maxl
+    const bool canHalve = (vertices_ % 2 == 0) && (vertices_ / 2 >= minl_) && (vertices_ / 2 <= maxl_);
+    return
+        // short route can start from any vertex:
+        haveShort * vertices_ * (shortMaxl - minl_ + 1)
+        // nr of options to cut solution in half:
+        + canHalve * vertices_ / 2;
+}
+
 TwoExchangeNeighborhood::TwoExchangeNeighborhood(const TwoExchangeNeighborhood& rhs) = default;
 
 std::unique_ptr<Neighborhood> TwoExchangeNeighborhood::clone() const
@@ -169,22 +181,14 @@ StepRandom::StepRandom(std::unique_ptr<Neighborhood> neighborhood,
 
 void StepRandom::step(Solution& base)
 {
-    // extremely stupid count, since neighborhood does not know its own size
-    int neighbors = 0;
+    const auto distribution = std::uniform_int_distribution{ 0ull, neighborhood_->size() - 1 };
+    const std::size_t choice = distribution(*random_);
+    neighborhood_->reset(base.length());
 
-    for (neighborhood_->reset(base.length()); *neighborhood_ != std::default_sentinel; ++*neighborhood_)
-        neighbors++;
+    for (std::size_t i = 0; i < choice; i++)
+        ++*neighborhood_;
 
-    if (neighbors > 0) {
-        const auto distribution = std::uniform_int_distribution{ 0, neighbors - 1 };
-        const int choice = distribution(*random_);
-        neighborhood_->reset(base.length());
-
-        for (int i = 0; i < choice; i++)
-            ++*neighborhood_;
-
-        neighborhood_->apply(base);
-    }
+    neighborhood_->apply(base);
 }
 
 LocalSearch::LocalSearch(std::unique_ptr<Step> step) noexcept
