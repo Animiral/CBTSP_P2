@@ -102,6 +102,7 @@ std::unique_ptr<Search> SearchBuilder::buildSearch() const
     case Configuration::Algorithm::MCO:
         return std::make_unique<Mco>(iterations_, popsize_, evaporation_,
             pheromoneAttraction_, objectiveAttraction_,
+            reinforceStrategy_,
             random_, buildImprovement());
 
     default:

@@ -17,6 +17,7 @@ protected:
     float evaporation = .1f; // fraction of pheromone decrease per tick
     float pheromoneAttraction = 10.f; // to which degree local pheromones attract
     float objectiveAttraction = 1.f; // to which degree local objective value attracts
+    ReinforceStrategy reinforceStrategy = ReinforceStrategy::LAMARCK;
     std::shared_ptr<Random> random = std::make_shared<Random>(); // random number generator
 
     Mco buildMco(std::size_t vertices) const
@@ -24,6 +25,7 @@ protected:
         auto improvement = buildImprovement(vertices);
         return Mco(ticks, mice, evaporation,
             pheromoneAttraction, objectiveAttraction,
+            reinforceStrategy,
             random, move(improvement));
     }
 

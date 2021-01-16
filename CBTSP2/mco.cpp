@@ -111,9 +111,11 @@ std::size_t Mouse::decideNext(const Solution& solution, std::size_t position)
 
 Mco::Mco(int ticks, int mice, float evaporation,
     float pheromoneAttraction, float objectiveAttraction,
+    ReinforceStrategy reinforceStrategy,
     const std::shared_ptr<Random>& random, std::unique_ptr<LocalSearch> improvement) noexcept
     : ticks_(ticks), mice_(mice), evaporation_(evaporation),
     pheromoneAttraction_(pheromoneAttraction), objectiveAttraction_(objectiveAttraction),
+    reinforceStrategy_(reinforceStrategy),
     random_(move(random)), improvement_(move(improvement))
 {
     assert(ticks > 0);
@@ -136,7 +138,7 @@ Solution Mco::search(const Problem& problem)
         for (std::size_t i = 0; i < mice_; i++) {
             const auto constructed = mouse.construct();
             const auto improved = improvement_->search(std::move(constructed));
-            state.reinforce(improved);
+            state.reinforce(ReinforceStrategy::DARWIN == reinforceStrategy_ ? constructed : improved);
             candidates[i] = std::move(improved);
 
             if (candidates[i] < best) {

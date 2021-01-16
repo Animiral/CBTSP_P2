@@ -14,6 +14,15 @@ import local;
 using Pheromone = float;
 
 /**
+ * Specifies from which found solution the search heuristic reinforces pheromones.
+ */
+export enum class ReinforceStrategy
+{
+    DARWIN, //!< Reinforce based on the generated tour before improvement heuristic.
+    LAMARCK //!< Reinforce based on the final tour after improvement heuristic.
+};
+
+/**
  * Models a state in the MCO search while it is underway.
  */
 class McoState
@@ -122,11 +131,13 @@ public:
      * @param evaporation: fraction of pheromone decrease per tick
      * @param pheromoneAttraction: to which degree local pheromones attract
      * @param objectiveAttraction: to which degree local objective value attracts
+     * @param reinforceStrategy: from which found solution to reinforce pheromones
      * @param random: random number generator
      * @param improvement: improvement heuristic to apply after Mouse construction
      */
     explicit Mco(int ticks, int mice, float evaporation,
         float pheromoneAttraction, float objectiveAttraction,
+        ReinforceStrategy reinforceStrategy,
         const std::shared_ptr<Random>& random, std::unique_ptr<LocalSearch> improvement) noexcept;
 
     /**
@@ -144,6 +155,7 @@ private:
     float evaporation_; // fraction of pheromone decrease per tick
     float pheromoneAttraction_; // to which degree local pheromones attract
     float objectiveAttraction_; // to which degree local objective value attracts
+    ReinforceStrategy reinforceStrategy_; // from which found solution to reinforce pheromones
     std::shared_ptr<Random> random_; //!< random number generator
     std::unique_ptr<LocalSearch> improvement_; //!< improvement heuristic
 

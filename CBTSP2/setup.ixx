@@ -15,6 +15,7 @@ export module setup;
 import cbtsp;
 import construction;
 import local;
+import mco;
 import config;
 import statistics;
 
@@ -80,10 +81,11 @@ private:
     int popsize_;
     std::shared_ptr<Random> random_;
 
-    // pre-tuned search parameters
+    // pre-tuned search parameters, to be exposed later
     constexpr static float evaporation_ = .1f; // MCO: fraction of pheromone decrease per tick
     constexpr static float pheromoneAttraction_ = 10.f; // MCO: to which degree local pheromones attract
     constexpr static float objectiveAttraction_ = 1.f; //  MCO: to which degree local objective value attracts
+    constexpr static ReinforceStrategy reinforceStrategy_ = ReinforceStrategy::LAMARCK;
 
     std::unique_ptr<DeterministicConstruction> buildDeterministicConstruction() const;
     std::unique_ptr<RandomConstruction> buildRandomConstruction() const;
