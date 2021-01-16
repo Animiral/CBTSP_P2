@@ -30,7 +30,7 @@ struct Parser
         return *++argv;
     }
 
-    enum class Token { LITERAL, ALGORITHM, STEP, ITERATIONS, POPSIZE, RUNS, STATS_OUT };
+    enum class Token { LITERAL, ALGORITHM, STEP, ITERATIONS, POPSIZE, RUNS, STATS_OUT, OPT_END };
 
     Token what() const
     {
@@ -45,6 +45,7 @@ struct Parser
         if ("-p"s == opt || "--popsize"s == opt)    return Token::POPSIZE;
         if ("-r"s == opt || "--runs"s == opt)       return Token::RUNS;
         if ("-d"s == opt || "--dump"s == opt)       return Token::STATS_OUT;
+        if ("--"s == opt)                           return Token::OPT_END;
 
         return Token::LITERAL;
     }
@@ -109,6 +110,10 @@ void Configuration::readArgv(int argc, const char* argv[])
         case Parser::Token::POPSIZE:      popsize_ = parser.intArg(); break;
         case Parser::Token::RUNS:         runs_ = parser.intArg(); break;
         case Parser::Token::STATS_OUT:    statsOutfile_ = parser.pathArg(); break;
+        case Parser::Token::OPT_END:
+            inputFiles_.insert(inputFiles_.end(), &parser.argv[1], &parser.argv[parser.argc]);
+            parser.argc = 1;
+            break;
         default: assert(0);
 
         }
