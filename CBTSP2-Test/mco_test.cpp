@@ -30,7 +30,7 @@ protected:
     // construct the improvement heuristic
     static std::unique_ptr<LocalSearch> buildImprovement(std::size_t vertices)
     {
-        auto neighborhood = std::make_unique<TwoExchangeNeighborhood>(vertices);
+        auto neighborhood = std::make_unique<TwoExchangeNeighborhood>();
         auto step = std::make_unique<BestImprovement>(move(neighborhood));
         return std::make_unique<LocalSearch>(move(step));
     }

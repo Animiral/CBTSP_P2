@@ -32,11 +32,16 @@ export class Neighborhood
 public:
 
     /**
-     * Initialize the Neighborhood for the given tour size.
+     * Construct a default neighborhood which, unless reset, is always empty.
+     */
+    Neighborhood() noexcept = default;
+
+    /**
+     * Set the Neighborhood to start from the beginning for the given tour size.
      *
      * @param vertices: number of vertices in the problem
      */
-    explicit Neighborhood(std::size_t vertices) noexcept;
+    virtual void reset(std::size_t vertices) noexcept;
 
     /**
      * Return a copy of this Neighborhood in its current state.
@@ -107,42 +112,77 @@ export class TwoExchangeNeighborhood : public Neighborhood
 public:
 
     /**
-     * Initialize the Neighborhood for the given tour size and length restrictions.
+     * Initialize the Neighborhood for the given length restrictions.
      *
-     * @param vertices: number of vertices in the problem
      * @param minl: minimum length of a subtour between edge exchange, e.g. std::max(vertices / 4, 3ull)
      * @param maxl: maximum length of the short subtour between edge exchange
      */
-    explicit TwoExchangeNeighborhood(std::size_t vertices,
-        std::size_t minl, std::size_t maxl) noexcept;
+    explicit TwoExchangeNeighborhood(std::size_t minl, std::size_t maxl) noexcept;
 
     /**
-     * Initialize the Neighborhood for the given tour size and length restrictions.
+     * Initialize the Neighborhood for the given optional length restrictions.
      *
      * If the minimum length and maximum length are not specified, the default is
      * to allow any length - the same as a full two-exchange neighborhood.
      *
-     * @param vertices: number of vertices in the problem
      * @param minl: minimum length of a subtour between edge exchange
      */
-    explicit TwoExchangeNeighborhood(std::size_t vertices,
-        std::size_t minl = 2ull) noexcept;
+    explicit TwoExchangeNeighborhood(std::size_t minl = 2ull) noexcept;
 
     //! Copy-constructor.
     TwoExchangeNeighborhood(const TwoExchangeNeighborhood& rhs);
 
+    void reset(std::size_t vertices) noexcept override;
     std::unique_ptr<Neighborhood> clone() const override;
     TwoExchangeNeighborhood& operator++() override;
     Value objective(const Solution& base) const noexcept override;
     void apply(Solution& solution) const override;
     bool operator!=(std::default_sentinel_t) const noexcept override;
 
-private:
+protected:
 
     std::size_t minl_; // maximum number of vertices in a sub-tour
     std::size_t maxl_; // maximum number of vertices in a sub-tour
     std::size_t cut1_; // first edge to exchange is before vertex at this position
     std::size_t cut2_; // second edge to exchange is before vertex at this position
+
+};
+
+/**
+ * This is a two-exchange neighborhood in which the exchange subtour length
+ * is limited to at least 3 vertices at and most 1/4 of the total tour length.
+ */
+export class NarrowNeighborhood : public TwoExchangeNeighborhood
+{
+
+public:
+
+    /**
+     * Initialize the narrow Neighborhood.
+     */
+    NarrowNeighborhood() noexcept;
+
+    void reset(std::size_t vertices) noexcept override;
+    std::unique_ptr<Neighborhood> clone() const override;
+
+};
+
+/**
+ * This is a two-exchange neighborhood in which the exchange subtour length
+ * is limited to at least 1/4 of the total tour length.
+ */
+export class WideNeighborhood : public TwoExchangeNeighborhood
+{
+
+public:
+
+    /**
+     * Initialize the wide Neighborhood.
+     */
+    WideNeighborhood() noexcept;
+
+    void reset(std::size_t vertices) noexcept override;
+    std::unique_ptr<Neighborhood> clone() const override;
 
 };
 

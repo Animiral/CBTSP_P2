@@ -24,19 +24,18 @@ int run(int argc, const char* argv[])
     const auto seed = std::chrono::system_clock::now().time_since_epoch().count();
     auto random = std::make_shared<Random>(static_cast<Random::result_type>(seed));
 
+    const auto searchBuilder = SearchBuilder(configuration.algorithm(),
+        configuration.stepFunction(),
+        configuration.iterations(),
+        configuration.popsize(),
+        random);
+
+    const auto search = searchBuilder.buildSearch();
+
     for (const auto inputFile : configuration.inputFiles()) {
         std::cout << "Loading problem: " << inputFile.filename() << " - ";
         const auto problem = readProblemFile(inputFile);
         std::cout << "loaded.\n";
-
-        const auto searchBuilder = SearchBuilder(configuration.algorithm(),
-            configuration.stepFunction(),
-            problem,
-            configuration.iterations(),
-            configuration.popsize(),
-            random);
-
-        const auto search = searchBuilder.buildSearch();
 
         const auto name = inputFile.stem().string();
         std::cout << format("Running {} searches on " + name + " - ", configuration.runs());

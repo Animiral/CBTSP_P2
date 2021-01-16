@@ -56,8 +56,8 @@ TEST(Vnd, BasicRun)
         }
     };
     auto construction = std::make_unique<MockConstruction>();
-    auto narrow = std::make_unique<FirstImprovement>(std::make_unique<TwoExchangeNeighborhood>(7, 2, 2));
-    auto wide = std::make_unique<FirstImprovement>(std::make_unique<TwoExchangeNeighborhood>(7, 3));
+    auto narrow = std::make_unique<FirstImprovement>(std::make_unique<TwoExchangeNeighborhood>(2, 2));
+    auto wide = std::make_unique<FirstImprovement>(std::make_unique<WideNeighborhood>());
     auto steps = std::vector<std::unique_ptr<Step>>();
     steps.push_back(move(narrow));
     steps.push_back(move(wide));

@@ -44,7 +44,9 @@ TEST_F(LocalTest, TwoExchangeNeighborhood)
         { 0, 3, 2, 1, 4 }
     };
 
-    for (auto it = TwoExchangeNeighborhood(5); it != std::default_sentinel; ++it) {
+    auto it = TwoExchangeNeighborhood();
+    it.reset(5);
+    for (; it != std::default_sentinel; ++it) {
         Solution s = it.applyCopy(solution);
         s.normalize();
         auto found = std::ranges::find(expected, s.vertices());
@@ -70,7 +72,9 @@ TEST_F(LocalTest, VertexShiftNeighborhood)
         { 0, 3, 2, 1, 4 }
     };
 
-    for (auto it = TwoExchangeNeighborhood(5, 2, 2); it != std::default_sentinel; ++it) {
+    auto it = TwoExchangeNeighborhood(2, 2);
+    it.reset(5);
+    for (; it != std::default_sentinel; ++it) {
         Solution s = it.applyCopy(solution);
         s.normalize();
         auto found = std::ranges::find(expected, s.vertices());
@@ -86,7 +90,7 @@ TEST_F(LocalTest, Search)
     const auto optimum = Solution(problem, { 0, 1, 2, 3, 4 });
     auto start = Solution(problem, { 0, 1, 3, 4, 2 }); // 2 steps from optimum
 
-    auto neighborhood = std::make_unique<TwoExchangeNeighborhood>(5);
+    auto neighborhood = std::make_unique<TwoExchangeNeighborhood>();
     auto step = std::make_unique<BestImprovement>(move(neighborhood));
     auto search = LocalSearch(move(step));
     auto actual = search.search(std::move(start));

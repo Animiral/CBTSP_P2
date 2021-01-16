@@ -8,9 +8,9 @@ module;
 
 module local;
 
-Neighborhood::Neighborhood(std::size_t vertices) noexcept
-    : vertices_(vertices)
+void Neighborhood::reset(std::size_t vertices) noexcept
 {
+    vertices_ = vertices;
 }
 
 Solution Neighborhood::applyCopy(const Solution& base) const
@@ -20,18 +20,23 @@ Solution Neighborhood::applyCopy(const Solution& base) const
     return neighbor;
 }
 
-TwoExchangeNeighborhood::TwoExchangeNeighborhood(std::size_t vertices,
-    std::size_t minl, std::size_t maxl) noexcept
-    : Neighborhood(vertices), minl_(minl), maxl_(maxl), cut1_(0), cut2_(minl)
+TwoExchangeNeighborhood::TwoExchangeNeighborhood(std::size_t minl, std::size_t maxl) noexcept
+    : Neighborhood(), minl_(minl), maxl_(maxl), cut1_(0), cut2_(minl)
 {
     assert(minl >= 2);
     assert(maxl >= minl);
-    assert(maxl <= vertices);
 }
 
-TwoExchangeNeighborhood::TwoExchangeNeighborhood(std::size_t vertices, std::size_t minl) noexcept
-    : TwoExchangeNeighborhood(vertices, minl, vertices)
+TwoExchangeNeighborhood::TwoExchangeNeighborhood(std::size_t minl) noexcept
+    : TwoExchangeNeighborhood(minl, std::numeric_limits<std::size_t>::max())
 {
+}
+
+void TwoExchangeNeighborhood::reset(std::size_t vertices) noexcept
+{
+    Neighborhood::reset(vertices);
+    cut1_ = 0;
+    cut2_ = minl_;
 }
 
 TwoExchangeNeighborhood::TwoExchangeNeighborhood(const TwoExchangeNeighborhood& rhs) = default;
@@ -43,6 +48,8 @@ std::unique_ptr<Neighborhood> TwoExchangeNeighborhood::clone() const
 
 TwoExchangeNeighborhood& TwoExchangeNeighborhood::operator++()
 {
+    assert(cut1_ < vertices_ - minl_);
+
     std::size_t shorterSubtour; // length of shorter subtour, may be restricted
 
     do {
@@ -77,6 +84,38 @@ bool TwoExchangeNeighborhood::operator!=(std::default_sentinel_t) const noexcept
     return cut1_ < vertices_ - minl_;
 }
 
+NarrowNeighborhood::NarrowNeighborhood() noexcept
+    : TwoExchangeNeighborhood(3ull, 3ull)
+{
+}
+
+void NarrowNeighborhood::reset(std::size_t vertices) noexcept
+{
+    TwoExchangeNeighborhood::reset(vertices);
+    maxl_ = std::max(vertices / 4, 3ull);
+}
+
+std::unique_ptr<Neighborhood> NarrowNeighborhood::clone() const
+{
+    return std::make_unique<NarrowNeighborhood>(*this);
+}
+
+WideNeighborhood::WideNeighborhood() noexcept
+    : TwoExchangeNeighborhood(3ull)
+{
+}
+
+void WideNeighborhood::reset(std::size_t vertices) noexcept
+{
+    TwoExchangeNeighborhood::reset(vertices);
+    minl_ = std::max(vertices / 4, 3ull) + 1;
+}
+
+std::unique_ptr<Neighborhood> WideNeighborhood::clone() const
+{
+    return std::make_unique<WideNeighborhood>(*this);
+}
+
 Step::Step(std::unique_ptr<Neighborhood> neighborhood) noexcept
     : neighborhood_(move(neighborhood))
 {
@@ -91,9 +130,9 @@ void FirstImprovement::step(Solution& base)
 {
     auto baseObjective = base.objective();
 
-    for (auto ns = neighborhood_->clone(); *ns != std::default_sentinel; ++*ns) {
-        if (ns->objective(base) < baseObjective) {
-            ns->apply(base);
+    for (neighborhood_->reset(base.length()); *neighborhood_ != std::default_sentinel; ++*neighborhood_) {
+        if (neighborhood_->objective(base) < baseObjective) {
+            neighborhood_->apply(base);
             return;
         }
     }
@@ -109,11 +148,11 @@ void BestImprovement::step(Solution& base)
     auto bestObjective = base.objective();
     std::unique_ptr<Neighborhood> bestNeighbor = nullptr;
 
-    for (auto ns = neighborhood_->clone(); *ns != std::default_sentinel; ++*ns) {
-        const Value newObjective = ns->objective(base);
+    for (neighborhood_->reset(base.length()); *neighborhood_ != std::default_sentinel; ++*neighborhood_) {
+        const Value newObjective = neighborhood_->objective(base);
         if (newObjective < bestObjective) {
             bestObjective = newObjective;
-            bestNeighbor = ns->clone();
+            bestNeighbor = neighborhood_->clone();
         }
     }
 
@@ -133,18 +172,18 @@ void StepRandom::step(Solution& base)
     // extremely stupid count, since neighborhood does not know its own size
     int neighbors = 0;
 
-    for (auto ns = neighborhood_->clone(); *ns != std::default_sentinel; ++*ns)
+    for (neighborhood_->reset(base.length()); *neighborhood_ != std::default_sentinel; ++*neighborhood_)
         neighbors++;
 
     if (neighbors > 0) {
         const auto distribution = std::uniform_int_distribution{ 0, neighbors - 1 };
         const int choice = distribution(*random_);
-        auto ns = neighborhood_->clone();
+        neighborhood_->reset(base.length());
 
         for (int i = 0; i < choice; i++)
-            ++* ns;
+            ++*neighborhood_;
 
-        ns->apply(base);
+        neighborhood_->apply(base);
     }
 }
 

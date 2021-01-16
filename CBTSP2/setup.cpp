@@ -70,13 +70,11 @@ void writeResults(const Statistics& statistics, std::filesystem::path solutionPa
 
 SearchBuilder::SearchBuilder(Configuration::Algorithm algorithm,
     Configuration::StepFunction stepFunction,
-    const Problem& problem,
     int iterations,
     int popsize,
     const std::shared_ptr<Random>& random) noexcept
     : algorithm_(algorithm), stepFunction_(stepFunction),
-    problem_(&problem), iterations_(iterations),
-    popsize_(popsize), random_(random)
+    iterations_(iterations), popsize_(popsize), random_(random)
 {
 }
 
@@ -129,22 +127,7 @@ std::unique_ptr<RandomConstruction> SearchBuilder::buildRandomConstruction() con
 
 std::unique_ptr<Neighborhood> SearchBuilder::buildFullNeighborhood() const
 {
-    return std::make_unique<TwoExchangeNeighborhood>(problem_->vertices());
-}
-
-std::unique_ptr<Neighborhood> SearchBuilder::buildShiftNeighborhood() const
-{
-    return std::make_unique<TwoExchangeNeighborhood>(problem_->vertices(), 2, 2);
-}
-
-std::unique_ptr<Neighborhood> SearchBuilder::buildNarrowNeighborhood() const
-{
-    return std::make_unique<TwoExchangeNeighborhood>(problem_->vertices(), 3, std::max(problem_->vertices() / 4, 3ull));
-}
-
-std::unique_ptr<Neighborhood> SearchBuilder::buildWideNeighborhood() const
-{
-    return std::make_unique<TwoExchangeNeighborhood>(problem_->vertices(), std::max(problem_->vertices() / 4, 3ull) + 1);
+    return std::make_unique<TwoExchangeNeighborhood>();
 }
 
 std::unique_ptr<Step> SearchBuilder::buildStep(std::unique_ptr<Neighborhood> neighborhood) const
@@ -170,9 +153,9 @@ std::unique_ptr<Step> SearchBuilder::buildStep(std::unique_ptr<Neighborhood> nei
 std::vector<std::unique_ptr<Step>> SearchBuilder::buildVndSteps() const
 {
     auto steps = std::vector<std::unique_ptr<Step>>();
-    steps.push_back(buildStep(buildShiftNeighborhood()));
-    steps.push_back(buildStep(buildNarrowNeighborhood()));
-    steps.push_back(buildStep(buildWideNeighborhood()));
+    steps.push_back(buildStep(std::make_unique<TwoExchangeNeighborhood>(2, 2)));
+    steps.push_back(buildStep(std::make_unique<NarrowNeighborhood>()));
+    steps.push_back(buildStep(std::make_unique<WideNeighborhood>()));
     return steps;
 }
 

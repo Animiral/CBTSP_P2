@@ -61,7 +61,6 @@ public:
      */
     explicit SearchBuilder(Configuration::Algorithm algorithm,
         Configuration::StepFunction stepFunction,
-        const Problem& problem,
         int iterations,
         int popsize,
         const std::shared_ptr<Random>& random) noexcept;
@@ -78,7 +77,6 @@ private:
     // configurable search parameters
     Configuration::Algorithm algorithm_;
     Configuration::StepFunction stepFunction_;
-    const Problem* problem_;
     int iterations_;
     int popsize_;
     std::shared_ptr<Random> random_;
@@ -91,9 +89,6 @@ private:
     std::unique_ptr<DeterministicConstruction> buildDeterministicConstruction() const;
     std::unique_ptr<RandomConstruction> buildRandomConstruction() const;
     std::unique_ptr<Neighborhood> buildFullNeighborhood() const;
-    std::unique_ptr<Neighborhood> buildShiftNeighborhood() const;
-    std::unique_ptr<Neighborhood> buildNarrowNeighborhood() const;
-    std::unique_ptr<Neighborhood> buildWideNeighborhood() const;
     std::unique_ptr<Step> buildStep(std::unique_ptr<Neighborhood> neighborhood) const;
     std::vector<std::unique_ptr<Step>> buildVndSteps() const;
     std::unique_ptr<LocalSearch> buildImprovement() const;
