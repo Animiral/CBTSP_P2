@@ -96,8 +96,14 @@ export class input_files_error : public std::exception
 
 public:
 
+    /**
+     * Construct the error and remember the problematic files.
+     */
     explicit input_files_error(const InputFiles& nonFiles);
 
+    /**
+     * Get an error message that names the problematic files.
+     */
     virtual char const* what() const noexcept override;
 
 private:

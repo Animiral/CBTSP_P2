@@ -54,7 +54,6 @@ public:
      *
      * @param algorithm: choice of search heuristic
      * @param stepFunction: choice of neighborhood step function
-     * @param problem: CBTSP instance to search in
      * @param iterations: number of iterations for GRASP and MCO
      * @param popsize: number of mice in an iteration of MCO
      * @param random: random number generator

@@ -71,6 +71,7 @@ public:
      * @param state: search state with pheromone info
      * @param pheromoneAttraction: to which degree local pheromones attract
      * @param objectiveAttraction: to which degree local objective value attracts
+     * @param random: random number generator
      */
     explicit Mouse(const Problem& problem, McoState& state,
         float pheromoneAttraction, float objectiveAttraction,

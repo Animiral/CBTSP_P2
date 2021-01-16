@@ -183,6 +183,11 @@ export class ConstructionSearch : public Search
 
 public:
 
+    /**
+     * Construct the search algorithm.
+     *
+     * @param construction: construction heuristic implementation
+     */
     explicit ConstructionSearch(std::unique_ptr<Construction> construction) noexcept;
 
     Solution search(const Problem& problem) override;

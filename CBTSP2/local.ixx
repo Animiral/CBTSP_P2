@@ -95,8 +95,9 @@ protected:
      */
     std::size_t vertices_;
 
-    // slicing is forbidden
+    //! Copy-constructor is protected to prevent slicing.
     Neighborhood(const Neighborhood& rhs) = default;
+    //! Assignment is protected to prevent slicing.
     Neighborhood& operator=(const Neighborhood& ) = default;
 
 };
@@ -148,10 +149,10 @@ public:
 
 protected:
 
-    std::size_t minl_; // maximum number of vertices in a sub-tour
-    std::size_t maxl_; // maximum number of vertices in a sub-tour
-    std::size_t cut1_; // first edge to exchange is before vertex at this position
-    std::size_t cut2_; // second edge to exchange is before vertex at this position
+    std::size_t minl_; //!< maximum number of vertices in a sub-tour
+    std::size_t maxl_; //!< maximum number of vertices in a sub-tour
+    std::size_t cut1_; //!< first edge to exchange is before vertex at this position
+    std::size_t cut2_; //!< second edge to exchange is before vertex at this position
 
 };
 
@@ -338,7 +339,6 @@ public:
      *
      * @param construction: factory for the initial solution
      * @param step: step function
-     * @param doTerminate: predicate to decide when to terminate the search
      */
     explicit StandaloneLocalSearch(
         std::unique_ptr<Construction> construction,

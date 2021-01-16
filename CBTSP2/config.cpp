@@ -10,17 +10,28 @@ module config;
 
 import util;
 
-// Amateur hour options parsing
+/**
+ * The Parser object holds the state of the options parser in progress.
+ * It offers functions to tokenize command arguments and extract argument values.
+ */
 struct Parser
 {
-    int argc;
-    const char** argv;
+    int argc; //!< number of remaining unparsed arguments
+    const char** argv; //!< remaining unparsed arguments data
 
+    /**
+     * Determine whether the parser has reached the end of the command line.
+     */
     bool end() const
     {
         return argc <= 0;
     }
 
+    /**
+     * Advance to the next command line argument.
+     *
+     * @return: the pointer to the next argument in front
+     */
     const char* next()
     {
         if(end())
@@ -30,8 +41,14 @@ struct Parser
         return *++argv;
     }
 
+    /**
+     * Describes the different kinds of argument values that this parser recognizes.
+     */
     enum class Token { LITERAL, ALGORITHM, STEP, ITERATIONS, POPSIZE, RUNS, STATS_OUT, OPT_END };
 
+    /**
+     * Determine the token type of the current argument in front.
+     */
     Token what() const
     {
         using namespace std::string_literals;
@@ -50,6 +67,12 @@ struct Parser
         return Token::LITERAL;
     }
 
+    /**
+     * Interpret the next argument value as an algorithm specification.
+     *
+     * @return: the argument parsed into an Algorithm
+     * @throw std::out_of_range: if the argument cannot be interpreted
+     */
     Configuration::Algorithm algorithm()
     {
         using namespace std::string_literals;
@@ -66,6 +89,12 @@ struct Parser
         throw std::out_of_range("Unknown algorithm: "s + opt);
     }
 
+    /**
+     * Interpret the next argument value as a step function specification.
+     *
+     * @return: the argument parsed into a StepFunction
+     * @throw std::out_of_range: if the argument cannot be interpreted
+     */
     Configuration::StepFunction stepFunction()
     {
         using namespace std::string_literals;
@@ -79,6 +108,13 @@ struct Parser
         throw std::out_of_range("Unknown step function: "s + opt);
     }
 
+    /**
+     * Interpret the next argument value as an integer value.
+     *
+     * @param minValue: minimum value of the argument
+     * @return: the argument parsed into an integer
+     * @throw std::out_of_range: if the argument is smaller than the minValue
+     */
     int intArg(int minValue = 1)
     {
         int value = std::stoi(next());
@@ -89,6 +125,12 @@ struct Parser
         return value;
     }
 
+    /**
+     * Interpret the next argument value as a filesystem path.
+     *
+     * @return: the argument parsed into a filesystem path
+     * @throw std::out_of_range: if the argument is missing
+     */
     std::filesystem::path pathArg()
     {
         return { next() };
