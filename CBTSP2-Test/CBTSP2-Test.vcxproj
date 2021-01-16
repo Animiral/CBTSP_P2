@@ -40,6 +40,7 @@
     <ClCompile Include="grasp_test.cpp" />
     <ClCompile Include="local_test.cpp" />
     <ClCompile Include="statistics_test.cpp" />
+    <ClCompile Include="util_test.cpp" />
     <ClCompile Include="vnd_test.cpp" />
   </ItemGroup>
   <ItemGroup>

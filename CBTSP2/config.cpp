@@ -1,7 +1,8 @@
 module;
 
 #include <string>
-#include <vector>
+#include <ranges>
+#include <functional>
 #include <filesystem>
 #include <cassert>
 
@@ -114,6 +115,8 @@ void Configuration::readArgv(int argc, const char* argv[])
 
         token = parser.next();
     }
+
+    validateInputFiles();
 }
 
 Configuration::Algorithm Configuration::algorithm() const noexcept
@@ -146,7 +149,36 @@ std::filesystem::path Configuration::statsOutfile() const noexcept
     return statsOutfile_;
 }
 
-const std::vector<std::filesystem::path>& Configuration::inputFiles() const noexcept
+const InputFiles& Configuration::inputFiles() const noexcept
 {
     return inputFiles_;
+}
+
+void Configuration::validateInputFiles() const
+{
+    InputFiles nonFiles;
+
+    const auto notFile = [](const auto& p) { return !std::filesystem::is_regular_file(p); };
+    std::ranges::copy_if(inputFiles_, std::back_inserter(nonFiles), notFile);
+
+    if (!nonFiles.empty())
+        throw input_files_error(nonFiles);
+}
+
+input_files_error::input_files_error(const InputFiles& nonFiles)
+    : exception(), nonFiles_(nonFiles), what_(buildWhat(nonFiles))
+{
+}
+
+char const* input_files_error::what() const noexcept
+{
+    return what_.c_str();
+}
+
+std::string input_files_error::buildWhat(const InputFiles& nonFiles)
+{
+    assert(!nonFiles.empty());
+
+    const auto asStrings = nonFiles | std::ranges::views::transform([](const auto& p) { return p.string(); });
+    return "Input files not found: " + join(", ", asStrings);
 }

@@ -5,8 +5,11 @@ module;
 
 #include <vector>
 #include <filesystem>
+#include <exception>
 
 export module config;
+
+using InputFiles = std::vector<std::filesystem::path>; //!< Type of input files list
 
 /**
  * Contains all collected and parsed settings for executing a program run.
@@ -64,7 +67,7 @@ public:
     /**
      * Get the configured set of CBTSP instance input files.
      */
-    const std::vector<std::filesystem::path>& inputFiles() const noexcept;
+    const InputFiles& inputFiles() const noexcept;
 
 private:
 
@@ -74,6 +77,34 @@ private:
     int popsize_ = 100;
     int runs_ = 100;
     std::filesystem::path statsOutfile_;
-    std::vector<std::filesystem::path> inputFiles_;
+    InputFiles inputFiles_;
+
+    /**
+     * Check whether the given path points to a file that we can read.
+     * If any files do not exist, throw an `input_file_error`.
+     */
+    void validateInputFiles() const;
+
+};
+
+/**
+ * This error occurs when input files given to the configuration do not point
+ * to existing files on the file system.
+ */
+export class input_files_error : public std::exception
+{
+
+public:
+
+    explicit input_files_error(const InputFiles& nonFiles);
+
+    virtual char const* what() const noexcept override;
+
+private:
+
+    InputFiles nonFiles_;
+    std::string what_;
+
+    std::string buildWhat(const InputFiles& nonFiles);
 
 };

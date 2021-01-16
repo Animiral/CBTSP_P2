@@ -4,8 +4,11 @@
 module;
 
 #include <string>
+#include <ranges>
+#include <numeric>
 #include <type_traits>
 #include <stdexcept>
+#include <cassert>
 
 export module util;
 
@@ -24,6 +27,32 @@ std::string format(std::string fmt, Arg arg, Args... args)
     else {
         return fmt;
     }
+}
+
+/**
+ * Join the given string-like objects with the given separator.
+ *
+ * @param separator: string to appear in-between all others
+ * @param strings: range of strings
+ * @return: the combined string
+ */
+export template <typename Separator, typename Strings>
+std::string join(const Separator& separator, const Strings& strings)
+{
+    assert(!strings.empty());
+
+    std::string result;
+    const auto strSize = std::accumulate(
+        std::ranges::cbegin(strings), std::ranges::cend(strings),
+        0ull, [](std::size_t sum, const auto& s) { return sum + s.size(); });
+    result.reserve((std::size(strings) - 1) * std::size(separator) + strSize + 1);
+
+    result.append(*std::ranges::begin(strings));
+    for (const auto& s : std::ranges::subrange(++std::ranges::begin(strings), std::ranges::end(strings))) {
+        result.append(separator);
+        result.append(s);
+    }
+    return result;
 }
 
 /**
