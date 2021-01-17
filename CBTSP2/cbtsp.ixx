@@ -133,12 +133,22 @@ public:
     /**
      * Get the number of nodes in the instance.
      */
-    std::size_t vertices() const;
+    std::size_t vertices() const noexcept;
 
     /**
      * Get the value that represents no edge between vertices.
      */
-    Value bigM() const;
+    Value bigM() const noexcept;
+
+    /**
+     * Get the minimum value of any edge in the instance.
+     */
+    Value min() const noexcept;
+
+    /**
+     * Get the maximum value of any edge in the instance.
+     */
+    Value max() const noexcept;
 
     /**
      * Add a new edge to the instance.
@@ -157,7 +167,7 @@ public:
      * @param end: end vertex
      * @return: the move value
      */
-    Value value(Vertex start, Vertex end) const;
+    Value value(Vertex start, Vertex end) const noexcept;
 
     /**
      * Parse the given text into an Instance.
@@ -176,6 +186,8 @@ private:
 
     std::size_t vertices_; //!< integer n of nodes in the instance, each identified by their number [0 : n - 1]
     Value big_m_; //!< value which is returned for edges between vertices that are not connected
+    Value min_; //!< minimum value of any edge
+    Value max_; //!< maximum value of any edge
     EdgeTable<Value> lookup_; //!< table of edge values
 
 };

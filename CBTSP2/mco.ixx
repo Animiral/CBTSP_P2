@@ -71,7 +71,7 @@ public:
 
 private:
 
-    std::size_t vertices_; //!< problem size
+    const Problem* problem_; //!< problem instance
     Pheromone min_; //!< lowest pheromone level
     Pheromone max_; //!< highest pheromone level
     EdgeTable<Pheromone> pheromone_; //!< current pheromone levels for every edge

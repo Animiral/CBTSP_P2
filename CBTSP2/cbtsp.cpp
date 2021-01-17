@@ -16,20 +16,30 @@ module cbtsp;
 import util;
 
 Problem::Problem(std::size_t vertices, Value bigM)
-    : vertices_(vertices), big_m_(bigM), lookup_(vertices, bigM)
+    : vertices_(vertices), big_m_(bigM), min_(0), max_(0), lookup_(vertices, bigM)
 {
     if (vertices < 3)
         throw std::invalid_argument("A valid instance consists of at least 3 vertices.");
 }
 
-std::size_t Problem::vertices() const
+std::size_t Problem::vertices() const noexcept
 {
     return vertices_;
 }
 
-Value Problem::bigM() const
+Value Problem::bigM() const noexcept
 {
     return big_m_;
+}
+
+Value Problem::min() const noexcept
+{
+    return min_;
+}
+
+Value Problem::max() const noexcept
+{
+    return max_;
 }
 
 void Problem::addEdge(Edge edge)
@@ -47,9 +57,11 @@ void Problem::addEdge(Edge edge)
         throw std::invalid_argument(format("Duplicate edge ({} - {}).", edge.a, edge.b));
 
     lookup_.at(edge.a, edge.b) = edge.value;
+    min_ = std::min(min_, edge.value);
+    max_ = std::max(max_, edge.value);
 }
 
-Value Problem::value(Vertex start, Vertex end) const
+Value Problem::value(Vertex start, Vertex end) const noexcept
 {
     assert(start < vertices_);
     assert(end < vertices_);

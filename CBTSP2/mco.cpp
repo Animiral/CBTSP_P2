@@ -11,9 +11,17 @@ module mco;
 
 import cbtsp;
 
+/**
+ * Normalize the given objective value according to the minimum and maximum value in the problem.
+ */
+Pheromone normObj(Value objective, const Problem& problem)
+{
+    return static_cast<Pheromone>(objective) / (problem.max() - problem.min());
+}
+
 McoState::McoState(const Problem& problem, Pheromone init, Pheromone min, Pheromone max)
-    : vertices_(problem.vertices()), min_(min), max_(max),
-    pheromone_(vertices_, init), delta_(vertices_, 0.f)
+    : problem_(&problem), min_(min), max_(max),
+    pheromone_(problem.vertices(), init), delta_(problem.vertices(), 0.f)
 {
 }
 
@@ -26,7 +34,7 @@ void McoState::reinforce(const Solution& solution, float scale) noexcept
 {
     assert(!solution.isPartial());
 
-    const Pheromone delta = scale / static_cast<Pheromone>(solution.objective());
+    const Pheromone delta = scale / normObj(solution.objective(), *problem_);
     const auto& vs = solution.vertices();
     Vertex prev = vs.back();
     for (auto v : vs) {
@@ -101,7 +109,7 @@ std::size_t Mouse::decideNext(const Solution& solution, std::size_t position)
     for (std::size_t i = position; i < n; i++) {
         const auto to = solution.vertices()[i];
         const auto pheromone = state_->pheromone(from, to);
-        const auto objective = 1.f / std::abs(solution.twoOptValue(0, i));
+        const auto objective = 1.f / normObj(std::abs(solution.twoOptValue(0, i)), *problem_);
         incentive[i - position] = std::pow(pheromone, pheromoneAttraction_)
             + std::pow(objective, objectiveAttraction_);
     }
