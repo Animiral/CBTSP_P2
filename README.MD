@@ -25,3 +25,15 @@ Gather basic results over all instances:
 ```
 CBTSP2-Main.exe --algorithm mco --dump mco-stats.csv instances/0*.txt
 ```
+
+Run the MCO Benchmark for raw and refined variants:
+
+```
+CBTSP2-Main.exe --suite bench-mco --dump bench-mco-stats.csv instances/0010.txt instances/0015.txt instances/0020.txt instances/0025.txt instances/0030.txt instances/0040.txt instances/0050.txt
+```
+
+Run the Popsize Experiment for raw and refined variants:
+
+```
+CBTSP2-Main.exe --suite popsize-mco --dump popsize-mco-stats.csv instances/0050.txt
+```

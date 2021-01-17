@@ -53,20 +53,73 @@ void runFromConfiguration(const Configuration& configuration)
     std::cout << "All done.\n";
 }
 
-// Run the MCO benchmark, a series of MCO searches with different parameters.
+// Run the MCO benchmark, a series of MCO searches with two different parameter sets.
 void runBenchMco(Configuration& configuration)
 {
-    std::cout << "Run MCO Benchmark:\n";
     configuration.algorithm = Configuration::Algorithm::MCO;
+    configuration.stepFunction = Configuration::StepFunction::FIRST_IMPROVEMENT;
+    configuration.iterations = 100;
+    configuration.popsize = 20;
+    configuration.evaporation = .1f;
+    configuration.minPheromone = 0.f;
+    configuration.pheromoneAttraction = 1.f;
+    configuration.runs = 100;
+
+    configuration.elitism = 0.f;
+    configuration.maxPheromone = std::numeric_limits<float>::max();
+    configuration.objectiveAttraction = 0.f;
+    configuration.intensification = 0.f;
+    configuration.reinforceStrategy = ReinforceStrategy::DARWIN;
+
+    std::cout << "Run Raw Benchmark:\n";
+
+    runFromConfiguration(configuration);
+
+    configuration.elitism = 1.f;
+    configuration.maxPheromone = 1.f;
+    configuration.objectiveAttraction = 1.f;
+    configuration.intensification = 0.5f;
+    configuration.reinforceStrategy = ReinforceStrategy::LAMARCK;
+
+    std::cout << "Run Refined Benchmark:\n";
+
     runFromConfiguration(configuration);
 }
 
 // Run the MCO iterations suite, an experiment to compare different popsize values.
 void runPopsizeMco(Configuration& configuration)
 {
-    std::cout << "Run MCO Popsize Experiment:\n";
     configuration.algorithm = Configuration::Algorithm::MCO;
-    for (int i = 1; i <= 2048; i *= 2) {
+    configuration.stepFunction = Configuration::StepFunction::FIRST_IMPROVEMENT;
+    configuration.iterations = 100;
+    configuration.evaporation = .1f;
+    configuration.minPheromone = 0.f;
+    configuration.pheromoneAttraction = 1.f;
+    configuration.runs = 100;
+
+    configuration.elitism = 0.f;
+    configuration.maxPheromone = std::numeric_limits<float>::max();
+    configuration.objectiveAttraction = 0.f;
+    configuration.intensification = 0.f;
+    configuration.reinforceStrategy = ReinforceStrategy::DARWIN;
+
+    std::cout << "Run popsize experiment on Raw Benchmark:\n";
+
+    for (int i = 10; i <= 100; i += 10) {
+        std::cout << "Popsize " << i << ":\n";
+        configuration.popsize = i;
+        runFromConfiguration(configuration);
+    }
+
+    configuration.elitism = 1.f;
+    configuration.maxPheromone = 1.f;
+    configuration.objectiveAttraction = 1.f;
+    configuration.intensification = 0.5f;
+    configuration.reinforceStrategy = ReinforceStrategy::LAMARCK;
+
+    std::cout << "Run popsize experiment on Refined Benchmark:\n";
+
+    for (int i = 10; i <= 100; i += 10) {
         std::cout << "Popsize " << i << ":\n";
         configuration.popsize = i;
         runFromConfiguration(configuration);
