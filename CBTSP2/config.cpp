@@ -48,7 +48,7 @@ struct Parser
     enum class Token
     {
         LITERAL,
-        ALGORITHM, STEP,
+        SUITE, ALGORITHM, STEP,
         ITERATIONS, POPSIZE, EVAPORATION, ELITISM,
         PHEROMONE_ATTRACTION, OBJECTIVE_ATTRACTION, REINFORCE_STRATEGY,
         RUNS, STATS_OUT, OPT_END
@@ -64,6 +64,7 @@ struct Parser
         assert(!end());
         const auto opt = argv[0];
 
+        if ("--suite"s == opt)                      return Token::SUITE;
         if ("-a"s == opt || "--algorithm"s == opt)  return Token::ALGORITHM;
         if ("-s"s == opt || "--step"s == opt)       return Token::STEP;
         if ("-i"s == opt || "--iterations"s == opt) return Token::ITERATIONS;
@@ -78,6 +79,25 @@ struct Parser
         if ("--"s == opt)                           return Token::OPT_END;
 
         return Token::LITERAL;
+    }
+
+    /**
+     * Interpret the next argument value as a suite specification.
+     *
+     * @return: the argument parsed into a Suite
+     * @throw std::out_of_range: if the argument cannot be interpreted
+     */
+    Configuration::Suite suite()
+    {
+        using namespace std::string_literals;
+
+        const auto opt = next();
+
+        if ("single"s == opt)      return Configuration::Suite::SINGLE;
+        if ("bench-mco"s == opt)   return Configuration::Suite::BENCH_MCO;
+        if ("popsize-mco"s == opt) return Configuration::Suite::POPSIZE_MCO;
+
+        throw std::out_of_range("Unknown suite: "s + opt);
     }
 
     /**
@@ -198,20 +218,21 @@ void Configuration::readArgv(int argc, const char* argv[])
     while (!parser.end()) {
         switch (parser.what()) {
 
-        case Parser::Token::LITERAL:      inputFiles_.emplace_back(token); break;
-        case Parser::Token::ALGORITHM:    algorithm_ = parser.algorithm(); break;
-        case Parser::Token::STEP:         stepFunction_ = parser.stepFunction(); break;
-        case Parser::Token::ITERATIONS:   iterations_ = parser.intArg(); break;
-        case Parser::Token::POPSIZE:      popsize_ = parser.intArg(); break;
-        case Parser::Token::EVAPORATION:  evaporation_ = parser.floatArg(0.f, 1.f); break;
-        case Parser::Token::ELITISM:      elitism_ = parser.floatArg(0.f); break;
-        case Parser::Token::PHEROMONE_ATTRACTION: pheromoneAttraction_ = parser.floatArg(); break;
-        case Parser::Token::OBJECTIVE_ATTRACTION: objectiveAttraction_ = parser.floatArg(); break;
-        case Parser::Token::REINFORCE_STRATEGY: reinforceStrategy_ = parser.reinforceStrategy(); break;
-        case Parser::Token::RUNS:         runs_ = parser.intArg(); break;
-        case Parser::Token::STATS_OUT:    statsOutfile_ = parser.pathArg(); break;
+        case Parser::Token::LITERAL:      inputFiles.emplace_back(token); break;
+        case Parser::Token::SUITE:        suite = parser.suite(); break;
+        case Parser::Token::ALGORITHM:    algorithm = parser.algorithm(); break;
+        case Parser::Token::STEP:         stepFunction = parser.stepFunction(); break;
+        case Parser::Token::ITERATIONS:   iterations = parser.intArg(); break;
+        case Parser::Token::POPSIZE:      popsize = parser.intArg(); break;
+        case Parser::Token::EVAPORATION:  evaporation = parser.floatArg(0.f, 1.f); break;
+        case Parser::Token::ELITISM:      elitism = parser.floatArg(0.f); break;
+        case Parser::Token::PHEROMONE_ATTRACTION: pheromoneAttraction = parser.floatArg(); break;
+        case Parser::Token::OBJECTIVE_ATTRACTION: objectiveAttraction = parser.floatArg(); break;
+        case Parser::Token::REINFORCE_STRATEGY: reinforceStrategy = parser.reinforceStrategy(); break;
+        case Parser::Token::RUNS:         runs = parser.intArg(); break;
+        case Parser::Token::STATS_OUT:    statsOutfile = parser.pathArg(); break;
         case Parser::Token::OPT_END:
-            inputFiles_.insert(inputFiles_.end(), &parser.argv[1], &parser.argv[parser.argc]);
+            inputFiles.insert(inputFiles.end(), &parser.argv[1], &parser.argv[parser.argc]);
             parser.argc = 1;
             break;
         default: assert(0);
@@ -224,72 +245,12 @@ void Configuration::readArgv(int argc, const char* argv[])
     validateInputFiles();
 }
 
-Configuration::Algorithm Configuration::algorithm() const noexcept
-{
-    return algorithm_;
-}
-
-Configuration::StepFunction Configuration::stepFunction() const noexcept
-{
-    return stepFunction_;
-}
-
-int Configuration::iterations() const noexcept
-{
-    return iterations_;
-}
-
-int Configuration::popsize() const noexcept
-{
-    return popsize_;
-}
-
-float Configuration::evaporation() const noexcept
-{
-    return evaporation_;
-}
-
-float Configuration::elitism() const noexcept
-{
-    return elitism_;
-}
-
-float Configuration::pheromoneAttraction() const noexcept
-{
-    return pheromoneAttraction_;
-}
-
-float Configuration::objectiveAttraction() const noexcept
-{
-    return objectiveAttraction_;
-}
-
-ReinforceStrategy Configuration::reinforceStrategy() const noexcept
-{
-    return reinforceStrategy_;
-}
-
-int Configuration::runs() const noexcept
-{
-    return runs_;
-}
-
-std::filesystem::path Configuration::statsOutfile() const noexcept
-{
-    return statsOutfile_;
-}
-
-const InputFiles& Configuration::inputFiles() const noexcept
-{
-    return inputFiles_;
-}
-
 void Configuration::validateInputFiles() const
 {
     InputFiles nonFiles;
 
     const auto notFile = [](const auto& p) { return !std::filesystem::is_regular_file(p); };
-    std::ranges::copy_if(inputFiles_, std::back_inserter(nonFiles), notFile);
+    std::ranges::copy_if(inputFiles, std::back_inserter(nonFiles), notFile);
 
     if (!nonFiles.empty())
         throw input_files_error(nonFiles);

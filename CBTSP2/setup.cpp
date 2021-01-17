@@ -55,6 +55,7 @@ void writeResults(const Statistics& statistics, std::filesystem::path solutionPa
     auto csv = statistics.name() + ";"
         + std::to_string(statistics.samples()) + ";"
         + std::to_string(statistics.feasibles()) + ";"
+        + std::to_string(statistics.bestSolution()->objective()) + ";"
         + std::to_string(statistics.meanObjective()) + ";"
         + std::to_string(statistics.stdevObjective()) + ";"
         + std::to_string(statistics.meanInfEdges()) + ";"

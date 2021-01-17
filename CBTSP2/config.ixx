@@ -27,89 +27,36 @@ public:
     void readArgv(int argc, const char* argv[]);
 
     /**
+     * Enumeration of available preset run suites, which cover multiple configurations.
+     * to run as the main mode of the program.
+     */
+    enum class Suite { SINGLE, BENCH_MCO, POPSIZE_MCO };
+
+    /**
      * Enumeration of available heuristics to run as the main mode of the program.
      */
     enum class Algorithm { DET_CONSTRUCTION, RAND_CONSTRUCTION, LOCAL_SEARCH, GRASP, VND, MCO };
-
-    /**
-     * Get the configured algorithm.
-     */
-    Algorithm algorithm() const noexcept;
 
     /**
      * Enumeration of available step functions to use in local search.
      */
     enum class StepFunction { RANDOM, FIRST_IMPROVEMENT, BEST_IMPROVEMENT };
 
-    /**
-     * Get the configured step function.
-     */
-    StepFunction stepFunction() const noexcept;
-
-    /**
-     * Get the configured number of iterations for random sampling in GRASP.
-     */
-    int iterations() const noexcept;
-
-    /**
-     * Get the configured number of mice for MCO.
-     */
-    int popsize() const noexcept;
-
-    /**
-     * Get the configured rate of evaporation for MCO.
-     */
-    float evaporation() const noexcept;
-
-    /**
-     * Get the configured elitism scale factor for MCO.
-     */
-    float elitism() const noexcept;
-
-    /**
-     * Get the configured pheromone attraction value for MCO.
-     */
-    float pheromoneAttraction() const noexcept;
-
-    /**
-     * Get the configured objective attraction value for MCO.
-     */
-    float objectiveAttraction() const noexcept;
-
-    /**
-     * Get the configured reinforce strategy for MCO.
-     */
-    ReinforceStrategy reinforceStrategy() const noexcept;
-
-    /**
-     * Get the configured number of runs for sampling run time.
-     */
-    int runs() const noexcept;
-
-    /**
-     * Get the configured output file for the statistical evaluation.
-     */
-    std::filesystem::path statsOutfile() const noexcept;
-
-    /**
-     * Get the configured set of CBTSP instance input files.
-     */
-    const InputFiles& inputFiles() const noexcept;
+    Suite suite = Suite::SINGLE; //!< run preset
+    Algorithm algorithm = Algorithm::GRASP; //!< main search mode
+    StepFunction stepFunction = StepFunction::BEST_IMPROVEMENT; //!< step strategy for local search
+    int iterations = 100; //!< number of iterations for GRASP and MCO
+    int popsize = 100; //!< MCO: number of mice
+    float evaporation = .1f; //!< MCO: fraction of pheromone decrease per tick
+    float elitism = 1.f; //!< MCO: factor of pheromone contribution of best solution so far
+    float pheromoneAttraction = 10.f; //!< MCO: to which degree local pheromones attract
+    float objectiveAttraction = 1.f; //!< MCO: to which degree local objective value attracts
+    ReinforceStrategy reinforceStrategy = ReinforceStrategy::LAMARCK; //!< MCO: pheromone update source
+    int runs = 100; //!< number of search attempts for statistical samples
+    std::filesystem::path statsOutfile; //!< output file for statistical results
+    InputFiles inputFiles; //!< CBTSP problem instance files
 
 private:
-
-    Algorithm algorithm_ = Algorithm::GRASP;
-    StepFunction stepFunction_ = StepFunction::BEST_IMPROVEMENT;
-    int iterations_ = 100;
-    int popsize_ = 100;
-    float evaporation_ = .1f;
-    float elitism_ = 1.f;
-    float pheromoneAttraction_ = 10.f;
-    float objectiveAttraction_ = 1.f;
-    ReinforceStrategy reinforceStrategy_ = ReinforceStrategy::LAMARCK;
-    int runs_ = 100;
-    std::filesystem::path statsOutfile_;
-    InputFiles inputFiles_;
 
     /**
      * Check whether the given path points to a file that we can read.
