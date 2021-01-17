@@ -49,8 +49,11 @@ public:
     int popsize = 100; //!< MCO: number of mice
     float evaporation = .1f; //!< MCO: fraction of pheromone decrease per tick
     float elitism = 1.f; //!< MCO: factor of pheromone contribution of best solution so far
-    float pheromoneAttraction = 10.f; //!< MCO: to which degree local pheromones attract
+    Pheromone minPheromone = 0.f; //!< MCO: minimum pheromone value
+    Pheromone maxPheromone = 1.f; //!< MCO: maximum and initial pheromone value
+    float pheromoneAttraction = 1.f; //!< MCO: to which degree local pheromones attract
     float objectiveAttraction = 1.f; //!< MCO: to which degree local objective value attracts
+    float intensification = .5f; //!< MCO: chance of choosing best step
     ReinforceStrategy reinforceStrategy = ReinforceStrategy::LAMARCK; //!< MCO: pheromone update source
     int runs = 100; //!< number of search attempts for statistical samples
     std::filesystem::path statsOutfile; //!< output file for statistical results

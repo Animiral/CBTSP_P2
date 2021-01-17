@@ -26,7 +26,9 @@ void runFromConfiguration(const Configuration& configuration)
         configuration.stepFunction,
         configuration.iterations, configuration.popsize,
         configuration.evaporation, configuration.elitism,
-        configuration.pheromoneAttraction, configuration.objectiveAttraction, configuration.reinforceStrategy,
+        configuration.minPheromone, configuration.maxPheromone,
+        configuration.pheromoneAttraction, configuration.objectiveAttraction,
+        configuration.intensification, configuration.reinforceStrategy,
         random);
 
     const auto search = searchBuilder.buildSearch();

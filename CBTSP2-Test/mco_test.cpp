@@ -16,8 +16,11 @@ protected:
     int mice = 100; // number of traversals within a tick to construct solution candidates
     float evaporation = .1f; // fraction of pheromone decrease per tick
     float elitism = 1.f; // scale of elitist pheromone increase
+    Pheromone minPheromone = 0.f; // min pheromone value
+    Pheromone maxPheromone = 0.f; // max pheromone value
     float pheromoneAttraction = 10.f; // to which degree local pheromones attract
     float objectiveAttraction = 1.f; // to which degree local objective value attracts
+    float intensification = .5f; // chance to take the best step outright
     ReinforceStrategy reinforceStrategy = ReinforceStrategy::LAMARCK;
     std::shared_ptr<Random> random = std::make_shared<Random>(); // random number generator
 
@@ -25,8 +28,9 @@ protected:
     {
         auto improvement = buildImprovement(vertices);
         return Mco(ticks, mice, evaporation, elitism,
+            minPheromone, maxPheromone,
             pheromoneAttraction, objectiveAttraction,
-            reinforceStrategy,
+            intensification, reinforceStrategy,
             random, move(improvement));
     }
 

@@ -49,8 +49,8 @@ struct Parser
     {
         LITERAL,
         SUITE, ALGORITHM, STEP,
-        ITERATIONS, POPSIZE, EVAPORATION, ELITISM,
-        PHEROMONE_ATTRACTION, OBJECTIVE_ATTRACTION, REINFORCE_STRATEGY,
+        ITERATIONS, POPSIZE, EVAPORATION, ELITISM, MIN_PHEROMONE, MAX_PHEROMONE,
+        PHEROMONE_ATTRACTION, OBJECTIVE_ATTRACTION, INTENSIFICATION, REINFORCE_STRATEGY,
         RUNS, STATS_OUT, OPT_END
     };
 
@@ -71,8 +71,11 @@ struct Parser
         if ("-p"s == opt || "--popsize"s == opt)    return Token::POPSIZE;
         if ("--evaporation"s == opt)                return Token::EVAPORATION;
         if ("--elitism"s == opt)                    return Token::ELITISM;
+        if ("--min-pheromone"s == opt)              return Token::MIN_PHEROMONE;
+        if ("--max-pheromone"s == opt)              return Token::MAX_PHEROMONE;
         if ("--pheromone-attraction"s == opt)       return Token::PHEROMONE_ATTRACTION;
         if ("--objective-attraction"s == opt)       return Token::OBJECTIVE_ATTRACTION;
+        if ("--intensification"s == opt)            return Token::INTENSIFICATION;
         if ("--reinforce-strategy"s == opt)         return Token::REINFORCE_STRATEGY;
         if ("-r"s == opt || "--runs"s == opt)       return Token::RUNS;
         if ("-d"s == opt || "--dump"s == opt)       return Token::STATS_OUT;
@@ -226,8 +229,11 @@ void Configuration::readArgv(int argc, const char* argv[])
         case Parser::Token::POPSIZE:      popsize = parser.intArg(); break;
         case Parser::Token::EVAPORATION:  evaporation = parser.floatArg(0.f, 1.f); break;
         case Parser::Token::ELITISM:      elitism = parser.floatArg(0.f); break;
+        case Parser::Token::MIN_PHEROMONE: minPheromone = parser.floatArg(); break;
+        case Parser::Token::MAX_PHEROMONE: maxPheromone = parser.floatArg(); break;
         case Parser::Token::PHEROMONE_ATTRACTION: pheromoneAttraction = parser.floatArg(); break;
         case Parser::Token::OBJECTIVE_ATTRACTION: objectiveAttraction = parser.floatArg(); break;
+        case Parser::Token::INTENSIFICATION: intensification = parser.floatArg(0.f, 1.f); break;
         case Parser::Token::REINFORCE_STRATEGY: reinforceStrategy = parser.reinforceStrategy(); break;
         case Parser::Token::RUNS:         runs = parser.intArg(); break;
         case Parser::Token::STATS_OUT:    statsOutfile = parser.pathArg(); break;

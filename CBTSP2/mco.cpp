@@ -11,8 +11,9 @@ module mco;
 
 import cbtsp;
 
-McoState::McoState(const Problem& problem)
-    : vertices_(problem.vertices()), pheromone_(vertices_, 0.f), delta_(vertices_, 0.f)
+McoState::McoState(const Problem& problem, Pheromone init, Pheromone min, Pheromone max)
+    : vertices_(problem.vertices()), min_(min), max_(max),
+    pheromone_(vertices_, init), delta_(vertices_, 0.f)
 {
 }
 
@@ -38,7 +39,7 @@ void McoState::evaporate(float evaporation) noexcept
 {
     for (Pheromone& p : pheromone_.all())
     {
-        p *= (1.f - evaporation);
+        p = (1.f - evaporation) * p + evaporation * min_;
     }
 }
 
@@ -48,7 +49,7 @@ void McoState::update() noexcept
     auto& delta = delta_.all();
 
     for (std::size_t i = 0; i < pheromone.size(); i++) {
-        pheromone[i] += delta[i];
+        pheromone[i] = std::clamp(pheromone[i] + delta[i], min_, max_);
     }
 
     std::ranges::fill(delta, 0.f);
@@ -56,10 +57,10 @@ void McoState::update() noexcept
 
 Mouse::Mouse(const Problem& problem, McoState& state,
     float pheromoneAttraction, float objectiveAttraction,
-    const std::shared_ptr<Random>& random) noexcept
+    float intensification, const std::shared_ptr<Random>& random) noexcept
     : problem_(&problem), state_(&state),
     pheromoneAttraction_(pheromoneAttraction), objectiveAttraction_(objectiveAttraction),
-    random_(random)
+    intensification_(intensification), random_(random)
 {
     assert(random);
 }
@@ -105,17 +106,27 @@ std::size_t Mouse::decideNext(const Solution& solution, std::size_t position)
             + std::pow(objective, objectiveAttraction_);
     }
 
-    auto distribution = std::discrete_distribution<std::size_t>{ incentive.begin(), incentive.end() };
-    return distribution(*random_) + position;
+    // diversification or intensification?
+    if (std::generate_canonical<float, std::numeric_limits<float>::digits>(*random_) < intensification_) {
+        // choose max incentivized
+        return std::ranges::max_element(incentive) - incentive.begin() + position;
+    }
+    else {
+        // choose according to incentives as probabilities
+        auto distribution = std::discrete_distribution<std::size_t>{ incentive.begin(), incentive.end() };
+        return distribution(*random_) + position;
+    }
 }
 
 Mco::Mco(int ticks, int mice, float evaporation, float elitism,
+    float minPheromone, float maxPheromone,
     float pheromoneAttraction, float objectiveAttraction,
-    ReinforceStrategy reinforceStrategy,
+    float intensification, ReinforceStrategy reinforceStrategy,
     const std::shared_ptr<Random>& random, std::unique_ptr<LocalSearch> improvement) noexcept
     : ticks_(ticks), mice_(mice), evaporation_(evaporation), elitism_(elitism),
+    minPheromone_(minPheromone), maxPheromone_(maxPheromone),
     pheromoneAttraction_(pheromoneAttraction), objectiveAttraction_(objectiveAttraction),
-    reinforceStrategy_(reinforceStrategy),
+    intensification_(intensification), reinforceStrategy_(reinforceStrategy),
     random_(move(random)), improvement_(move(improvement))
 {
     assert(ticks > 0);
@@ -123,14 +134,18 @@ Mco::Mco(int ticks, int mice, float evaporation, float elitism,
     assert(evaporation >= 0.f);
     assert(evaporation <= 1.f);
     assert(elitism >= 0.f);
+    assert(minPheromone < maxPheromone);
+    assert(intensification >= 0.f);
+    assert(intensification <= 1.f);
     assert(random_);
     assert(improvement_);
 }
 
 Solution Mco::search(const Problem& problem)
 {
-    auto state = McoState{ problem };
-    auto mouse = Mouse{ problem, state, pheromoneAttraction_, objectiveAttraction_, random_ };
+    auto state = McoState{ problem, maxPheromone_, minPheromone_, maxPheromone_ };
+    auto mouse = Mouse{ problem, state, pheromoneAttraction_, objectiveAttraction_,
+        intensification_, random_ };
     auto best = Solution{ problem, {}, std::numeric_limits<Value>::max() };
     auto candidates = std::vector<Solution>(mice_, best);
     auto countdown = ticks_;

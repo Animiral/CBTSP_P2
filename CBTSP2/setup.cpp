@@ -72,12 +72,16 @@ void writeResults(const Statistics& statistics, std::filesystem::path solutionPa
 SearchBuilder::SearchBuilder(Configuration::Algorithm algorithm,
     Configuration::StepFunction stepFunction,
     int iterations, int popsize, float evaporation, float elitism,
-    float pheromoneAttraction, float objectiveAttraction, ReinforceStrategy reinforceStrategy,
+    Pheromone minPheromone, Pheromone maxPheromone,
+    float pheromoneAttraction, float objectiveAttraction,
+    float intensification, ReinforceStrategy reinforceStrategy,
     const std::shared_ptr<Random>& random) noexcept
     : algorithm_(algorithm), stepFunction_(stepFunction),
     iterations_(iterations), popsize_(popsize), evaporation_(evaporation), elitism_(elitism),
+    minPheromone_(minPheromone), maxPheromone_(maxPheromone),
     pheromoneAttraction_(pheromoneAttraction), objectiveAttraction_(objectiveAttraction),
-    reinforceStrategy_(reinforceStrategy), random_(random)
+    intensification_(intensification), reinforceStrategy_(reinforceStrategy),
+    random_(random)
 {
 }
 
@@ -104,8 +108,8 @@ std::unique_ptr<Search> SearchBuilder::buildSearch() const
 
     case Configuration::Algorithm::MCO:
         return std::make_unique<Mco>(iterations_, popsize_, evaporation_, elitism_,
-            pheromoneAttraction_, objectiveAttraction_,
-            reinforceStrategy_,
+            minPheromone_, maxPheromone_, pheromoneAttraction_, objectiveAttraction_,
+            intensification_, reinforceStrategy_,
             random_, buildImprovement());
 
     default:

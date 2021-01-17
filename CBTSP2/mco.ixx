@@ -11,7 +11,7 @@ export module mco;
 import cbtsp;
 import local;
 
-using Pheromone = float;
+export using Pheromone = float;
 
 /**
  * Specifies from which found solution the search heuristic reinforces pheromones.
@@ -32,8 +32,14 @@ public:
 
     /**
      * Construct a state for solving the given problem from the beginning.
+     *
+     * @param problem: problem instance
+     * @param init: initial value of all pheromones
+     * @param min: lowest pheromone level
+     * @param max: highest pheromone level
      */
-    explicit McoState(const Problem& problem);
+    explicit McoState(const Problem& problem, Pheromone init,
+        Pheromone min, Pheromone max);
 
     /**
      * Look up the pheromone in the lookup vector.
@@ -49,7 +55,12 @@ public:
     void reinforce(const Solution& solution, float scale = 1.f) noexcept;
 
     /**
-     * Lower pheromone intensity everywhere.
+     * Revert pheromone intensity everywhere.
+     *
+     * The updated intensity is the current intensity, with a certain fraction
+     * replaced by the lowest pheromone intensity.
+     *
+     * @param evaporation: fraction of lowest pheromone level
      */
     void evaporate(float evaporation) noexcept;
 
@@ -61,6 +72,8 @@ public:
 private:
 
     std::size_t vertices_; //!< problem size
+    Pheromone min_; //!< lowest pheromone level
+    Pheromone max_; //!< highest pheromone level
     EdgeTable<Pheromone> pheromone_; //!< current pheromone levels for every edge
     EdgeTable<Pheromone> delta_; //!< upcoming pheromone update
 
@@ -81,11 +94,12 @@ public:
      * @param state: search state with pheromone info
      * @param pheromoneAttraction: to which degree local pheromones attract
      * @param objectiveAttraction: to which degree local objective value attracts
+     * @param intensification: probability to outright select the best step
      * @param random: random number generator
      */
     explicit Mouse(const Problem& problem, McoState& state,
         float pheromoneAttraction, float objectiveAttraction,
-        const std::shared_ptr<Random>& random) noexcept;
+        float intensification, const std::shared_ptr<Random>& random) noexcept;
 
     /**
      * Traverse the problem to construct a solution.
@@ -109,6 +123,7 @@ private:
     McoState* state_; //!< pheromone info
     float pheromoneAttraction_; //!< pheromone attraction
     float objectiveAttraction_; //!< objective attraction
+    float intensification_; //!< probability to outright select the best step
     std::shared_ptr<Random> random_; //!< random number generator
 
 };
@@ -131,15 +146,19 @@ public:
      * @param mice: number of traversals within a tick to construct solution candidates
      * @param evaporation: fraction of pheromone decrease per tick
      * @param elitism: factor of pheromone contribution of best solution so far
+     * @param minPheromone: minimum pheromone value
+     * @param maxPheromone: maximum and initial pheromone value
      * @param pheromoneAttraction: to which degree local pheromones attract
      * @param objectiveAttraction: to which degree local objective value attracts
+     * @param intensification: chance of choosing best step
      * @param reinforceStrategy: from which found solution to reinforce pheromones
      * @param random: random number generator
      * @param improvement: improvement heuristic to apply after Mouse construction
      */
     explicit Mco(int ticks, int mice, float evaporation, float elitism,
+        float minPheromone, float maxPheromone,
         float pheromoneAttraction, float objectiveAttraction,
-        ReinforceStrategy reinforceStrategy,
+        float intensification, ReinforceStrategy reinforceStrategy,
         const std::shared_ptr<Random>& random, std::unique_ptr<LocalSearch> improvement) noexcept;
 
     /**
@@ -156,8 +175,11 @@ private:
     int mice_; // number of traversals within a tick to construct solution candidates
     float evaporation_; // fraction of pheromone decrease per tick
     float elitism_; // factor of pheromone contribution of best solution so far
+    float minPheromone_; //!< minimum pheromone value
+    float maxPheromone_; //!< maximum and initial pheromone value
     float pheromoneAttraction_; // to which degree local pheromones attract
     float objectiveAttraction_; // to which degree local objective value attracts
+    float intensification_; // chance of choosing best step
     ReinforceStrategy reinforceStrategy_; // from which found solution to reinforce pheromones
     std::shared_ptr<Random> random_; //!< random number generator
     std::unique_ptr<LocalSearch> improvement_; //!< improvement heuristic

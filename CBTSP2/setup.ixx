@@ -62,7 +62,9 @@ public:
     explicit SearchBuilder(Configuration::Algorithm algorithm,
         Configuration::StepFunction stepFunction,
         int iterations, int popsize, float evaporation, float elitism,
-        float pheromoneAttraction, float objectiveAttraction, ReinforceStrategy reinforceStrategy,
+        Pheromone minPheromone, Pheromone maxPheromone,
+        float pheromoneAttraction, float objectiveAttraction,
+        float intensification, ReinforceStrategy reinforceStrategy,
         const std::shared_ptr<Random>& random) noexcept;
 
     /**
@@ -81,8 +83,11 @@ private:
     int popsize_;
     float evaporation_; // MCO: fraction of pheromone decrease per tick
     float elitism_; // MCO: factor of pheromone contribution of best solution so far
+    Pheromone minPheromone_; //!< MCO: minimum pheromone value
+    Pheromone maxPheromone_; //!< MCO: maximum and initial pheromone value
     float pheromoneAttraction_; // MCO: to which degree local pheromones attract
     float objectiveAttraction_; // MCO: to which degree local objective value attracts
+    float intensification_; //!< MCO: chance of choosing best step
     ReinforceStrategy reinforceStrategy_; // MCO: pheromone update source
     std::shared_ptr<Random> random_;
 
