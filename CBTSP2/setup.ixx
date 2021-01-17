@@ -57,6 +57,14 @@ public:
      * @param stepFunction: choice of neighborhood step function
      * @param iterations: number of iterations for GRASP and MCO
      * @param popsize: number of mice in an iteration of MCO
+     * @param evaporation: MCO: fraction of pheromone decrease per tick
+     * @param elitism: MCO: factor of pheromone contribution of best solution so far
+     * @param minPheromone: MCO: minimum pheromone value
+     * @param maxPheromone: MCO: maximum and initial pheromone value
+     * @param pheromoneAttraction: MCO: to which degree local pheromones attract
+     * @param objectiveAttraction: MCO: to which degree local objective value attracts
+     * @param intensification: MCO: chance of choosing best step
+     * @param reinforceStrategy: MCO: pheromone update source
      * @param random: random number generator
      */
     explicit SearchBuilder(Configuration::Algorithm algorithm,
