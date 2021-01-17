@@ -44,8 +44,9 @@ public:
      * Spread pheromones along the solution edges based on the objective value.
      *
      * @param solution: complete solution object
+     * @param scale: multiply pheromone bonus by this factor
      */
-    void reinforce(const Solution& solution) noexcept;
+    void reinforce(const Solution& solution, float scale = 1.f) noexcept;
 
     /**
      * Lower pheromone intensity everywhere.
@@ -129,13 +130,14 @@ public:
      * @param ticks: number of iterations on a stagnated solution before termination
      * @param mice: number of traversals within a tick to construct solution candidates
      * @param evaporation: fraction of pheromone decrease per tick
+     * @param elitism: factor of pheromone contribution of best solution so far
      * @param pheromoneAttraction: to which degree local pheromones attract
      * @param objectiveAttraction: to which degree local objective value attracts
      * @param reinforceStrategy: from which found solution to reinforce pheromones
      * @param random: random number generator
      * @param improvement: improvement heuristic to apply after Mouse construction
      */
-    explicit Mco(int ticks, int mice, float evaporation,
+    explicit Mco(int ticks, int mice, float evaporation, float elitism,
         float pheromoneAttraction, float objectiveAttraction,
         ReinforceStrategy reinforceStrategy,
         const std::shared_ptr<Random>& random, std::unique_ptr<LocalSearch> improvement) noexcept;
@@ -153,6 +155,7 @@ private:
     int ticks_; // number of iterations on a stagnated solution before termination
     int mice_; // number of traversals within a tick to construct solution candidates
     float evaporation_; // fraction of pheromone decrease per tick
+    float elitism_; // factor of pheromone contribution of best solution so far
     float pheromoneAttraction_; // to which degree local pheromones attract
     float objectiveAttraction_; // to which degree local objective value attracts
     ReinforceStrategy reinforceStrategy_; // from which found solution to reinforce pheromones

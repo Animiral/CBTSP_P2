@@ -83,6 +83,7 @@ private:
 
     // pre-tuned search parameters, to be exposed later
     constexpr static float evaporation_ = .1f; // MCO: fraction of pheromone decrease per tick
+    constexpr static float elitism_ = 1.f; // MCO: factor of pheromone contribution of best solution so far
     constexpr static float pheromoneAttraction_ = 10.f; // MCO: to which degree local pheromones attract
     constexpr static float objectiveAttraction_ = 1.f; //  MCO: to which degree local objective value attracts
     constexpr static ReinforceStrategy reinforceStrategy_ = ReinforceStrategy::LAMARCK;

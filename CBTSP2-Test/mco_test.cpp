@@ -15,6 +15,7 @@ protected:
     int ticks = 100; // number of iterations on a stagnated solution before termination
     int mice = 100; // number of traversals within a tick to construct solution candidates
     float evaporation = .1f; // fraction of pheromone decrease per tick
+    float elitism = 1.f; // scale of elitist pheromone increase
     float pheromoneAttraction = 10.f; // to which degree local pheromones attract
     float objectiveAttraction = 1.f; // to which degree local objective value attracts
     ReinforceStrategy reinforceStrategy = ReinforceStrategy::LAMARCK;
@@ -23,7 +24,7 @@ protected:
     Mco buildMco(std::size_t vertices) const
     {
         auto improvement = buildImprovement(vertices);
-        return Mco(ticks, mice, evaporation,
+        return Mco(ticks, mice, evaporation, elitism,
             pheromoneAttraction, objectiveAttraction,
             reinforceStrategy,
             random, move(improvement));

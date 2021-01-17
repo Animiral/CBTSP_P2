@@ -21,11 +21,11 @@ Pheromone McoState::pheromone(Vertex a, Vertex b) const noexcept
     return pheromone_.at(a, b);
 }
 
-void McoState::reinforce(const Solution& solution) noexcept
+void McoState::reinforce(const Solution& solution, float scale) noexcept
 {
     assert(!solution.isPartial());
 
-    const Pheromone delta = 1.f / static_cast<Pheromone>(solution.objective());
+    const Pheromone delta = scale / static_cast<Pheromone>(solution.objective());
     const auto& vs = solution.vertices();
     Vertex prev = vs.back();
     for (auto v : vs) {
@@ -109,11 +109,11 @@ std::size_t Mouse::decideNext(const Solution& solution, std::size_t position)
     return distribution(*random_) + position;
 }
 
-Mco::Mco(int ticks, int mice, float evaporation,
+Mco::Mco(int ticks, int mice, float evaporation, float elitism,
     float pheromoneAttraction, float objectiveAttraction,
     ReinforceStrategy reinforceStrategy,
     const std::shared_ptr<Random>& random, std::unique_ptr<LocalSearch> improvement) noexcept
-    : ticks_(ticks), mice_(mice), evaporation_(evaporation),
+    : ticks_(ticks), mice_(mice), evaporation_(evaporation), elitism_(elitism),
     pheromoneAttraction_(pheromoneAttraction), objectiveAttraction_(objectiveAttraction),
     reinforceStrategy_(reinforceStrategy),
     random_(move(random)), improvement_(move(improvement))
@@ -122,6 +122,7 @@ Mco::Mco(int ticks, int mice, float evaporation,
     assert(mice > 0);
     assert(evaporation >= 0.f);
     assert(evaporation <= 1.f);
+    assert(elitism >= 0.f);
     assert(random_);
     assert(improvement_);
 }
@@ -147,6 +148,7 @@ Solution Mco::search(const Problem& problem)
             }
         }
 
+        state.reinforce(best, elitism_); // best known solution gets extra pheromones
         state.update();
         state.evaporate(evaporation_);
     }

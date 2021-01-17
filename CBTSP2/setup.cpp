@@ -100,7 +100,7 @@ std::unique_ptr<Search> SearchBuilder::buildSearch() const
         return std::make_unique<Vnd>(buildRandomConstruction(), buildVndSteps());
 
     case Configuration::Algorithm::MCO:
-        return std::make_unique<Mco>(iterations_, popsize_, evaporation_,
+        return std::make_unique<Mco>(iterations_, popsize_, evaporation_, elitism_,
             pheromoneAttraction_, objectiveAttraction_,
             reinforceStrategy_,
             random_, buildImprovement());
