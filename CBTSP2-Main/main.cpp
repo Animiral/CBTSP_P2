@@ -26,8 +26,9 @@ int run(int argc, const char* argv[])
 
     const auto searchBuilder = SearchBuilder(configuration.algorithm(),
         configuration.stepFunction(),
-        configuration.iterations(),
-        configuration.popsize(),
+        configuration.iterations(), configuration.popsize(),
+        configuration.evaporation(), configuration.elitism(),
+        configuration.pheromoneAttraction(), configuration.objectiveAttraction(), configuration.reinforceStrategy(),
         random);
 
     const auto search = searchBuilder.buildSearch();

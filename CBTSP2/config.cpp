@@ -9,6 +9,7 @@ module;
 module config;
 
 import util;
+import mco;
 
 /**
  * The Parser object holds the state of the options parser in progress.
@@ -44,7 +45,14 @@ struct Parser
     /**
      * Describes the different kinds of argument values that this parser recognizes.
      */
-    enum class Token { LITERAL, ALGORITHM, STEP, ITERATIONS, POPSIZE, RUNS, STATS_OUT, OPT_END };
+    enum class Token
+    {
+        LITERAL,
+        ALGORITHM, STEP,
+        ITERATIONS, POPSIZE, EVAPORATION, ELITISM,
+        PHEROMONE_ATTRACTION, OBJECTIVE_ATTRACTION, REINFORCE_STRATEGY,
+        RUNS, STATS_OUT, OPT_END
+    };
 
     /**
      * Determine the token type of the current argument in front.
@@ -60,6 +68,11 @@ struct Parser
         if ("-s"s == opt || "--step"s == opt)       return Token::STEP;
         if ("-i"s == opt || "--iterations"s == opt) return Token::ITERATIONS;
         if ("-p"s == opt || "--popsize"s == opt)    return Token::POPSIZE;
+        if ("--evaporation"s == opt)                return Token::EVAPORATION;
+        if ("--elitism"s == opt)                    return Token::ELITISM;
+        if ("--pheromone-attraction"s == opt)       return Token::PHEROMONE_ATTRACTION;
+        if ("--objective-attraction"s == opt)       return Token::OBJECTIVE_ATTRACTION;
+        if ("--reinforce-strategy"s == opt)         return Token::REINFORCE_STRATEGY;
         if ("-r"s == opt || "--runs"s == opt)       return Token::RUNS;
         if ("-d"s == opt || "--dump"s == opt)       return Token::STATS_OUT;
         if ("--"s == opt)                           return Token::OPT_END;
@@ -109,6 +122,24 @@ struct Parser
     }
 
     /**
+     * Interpret the next argument value as a reinforcement strategy specification.
+     *
+     * @return: the argument parsed into a ReinforceStrategy
+     * @throw std::out_of_range: if the argument cannot be interpreted
+     */
+    ReinforceStrategy reinforceStrategy()
+    {
+        using namespace std::string_literals;
+
+        const auto opt = next();
+
+        if ("darwin"s == opt)  return ReinforceStrategy::DARWIN;
+        if ("lamarck"s == opt) return ReinforceStrategy::LAMARCK;
+
+        throw std::out_of_range("Unknown reinforcement strategy: "s + opt);
+    }
+
+    /**
      * Interpret the next argument value as an integer value.
      *
      * @param minValue: minimum value of the argument
@@ -117,10 +148,32 @@ struct Parser
      */
     int intArg(int minValue = 1)
     {
-        int value = std::stoi(next());
+        const int value = std::stoi(next());
 
         if (value < minValue)
             throw std::out_of_range(format("Integer argument value too small: {} (< {})", value, minValue));
+
+        return value;
+    }
+
+    /**
+     * Interpret the next argument value as a floating-point value.
+     *
+     * @param minValue: minimum value of the argument
+     * @param maxValue: maximum value of the argument
+     * @return: the argument parsed into a floating-point value
+     * @throw std::out_of_range: if the argument violates minValue or maxValue
+     */
+    float floatArg(float minValue = std::numeric_limits<float>::lowest(),
+        float maxValue = std::numeric_limits<float>::max())
+    {
+        const float value = std::stof(next());
+
+        if (value < minValue)
+            throw std::out_of_range(format("Floating-point argument value too small: {} (< {})", value, minValue));
+
+        if (value > maxValue)
+            throw std::out_of_range(format("Floating-point argument value too large: {} (> {})", value, maxValue));
 
         return value;
     }
@@ -150,6 +203,11 @@ void Configuration::readArgv(int argc, const char* argv[])
         case Parser::Token::STEP:         stepFunction_ = parser.stepFunction(); break;
         case Parser::Token::ITERATIONS:   iterations_ = parser.intArg(); break;
         case Parser::Token::POPSIZE:      popsize_ = parser.intArg(); break;
+        case Parser::Token::EVAPORATION:  evaporation_ = parser.floatArg(0.f, 1.f); break;
+        case Parser::Token::ELITISM:      elitism_ = parser.floatArg(0.f); break;
+        case Parser::Token::PHEROMONE_ATTRACTION: pheromoneAttraction_ = parser.floatArg(); break;
+        case Parser::Token::OBJECTIVE_ATTRACTION: objectiveAttraction_ = parser.floatArg(); break;
+        case Parser::Token::REINFORCE_STRATEGY: reinforceStrategy_ = parser.reinforceStrategy(); break;
         case Parser::Token::RUNS:         runs_ = parser.intArg(); break;
         case Parser::Token::STATS_OUT:    statsOutfile_ = parser.pathArg(); break;
         case Parser::Token::OPT_END:
@@ -184,6 +242,31 @@ int Configuration::iterations() const noexcept
 int Configuration::popsize() const noexcept
 {
     return popsize_;
+}
+
+float Configuration::evaporation() const noexcept
+{
+    return evaporation_;
+}
+
+float Configuration::elitism() const noexcept
+{
+    return elitism_;
+}
+
+float Configuration::pheromoneAttraction() const noexcept
+{
+    return pheromoneAttraction_;
+}
+
+float Configuration::objectiveAttraction() const noexcept
+{
+    return objectiveAttraction_;
+}
+
+ReinforceStrategy Configuration::reinforceStrategy() const noexcept
+{
+    return reinforceStrategy_;
 }
 
 int Configuration::runs() const noexcept

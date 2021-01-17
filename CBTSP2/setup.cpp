@@ -70,11 +70,13 @@ void writeResults(const Statistics& statistics, std::filesystem::path solutionPa
 
 SearchBuilder::SearchBuilder(Configuration::Algorithm algorithm,
     Configuration::StepFunction stepFunction,
-    int iterations,
-    int popsize,
+    int iterations, int popsize, float evaporation, float elitism,
+    float pheromoneAttraction, float objectiveAttraction, ReinforceStrategy reinforceStrategy,
     const std::shared_ptr<Random>& random) noexcept
     : algorithm_(algorithm), stepFunction_(stepFunction),
-    iterations_(iterations), popsize_(popsize), random_(random)
+    iterations_(iterations), popsize_(popsize), evaporation_(evaporation), elitism_(elitism),
+    pheromoneAttraction_(pheromoneAttraction), objectiveAttraction_(objectiveAttraction),
+    reinforceStrategy_(reinforceStrategy), random_(random)
 {
 }
 

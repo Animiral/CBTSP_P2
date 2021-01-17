@@ -9,6 +9,8 @@ module;
 
 export module config;
 
+import mco;
+
 using InputFiles = std::vector<std::filesystem::path>; //!< Type of input files list
 
 /**
@@ -55,6 +57,31 @@ public:
     int popsize() const noexcept;
 
     /**
+     * Get the configured rate of evaporation for MCO.
+     */
+    float evaporation() const noexcept;
+
+    /**
+     * Get the configured elitism scale factor for MCO.
+     */
+    float elitism() const noexcept;
+
+    /**
+     * Get the configured pheromone attraction value for MCO.
+     */
+    float pheromoneAttraction() const noexcept;
+
+    /**
+     * Get the configured objective attraction value for MCO.
+     */
+    float objectiveAttraction() const noexcept;
+
+    /**
+     * Get the configured reinforce strategy for MCO.
+     */
+    ReinforceStrategy reinforceStrategy() const noexcept;
+
+    /**
      * Get the configured number of runs for sampling run time.
      */
     int runs() const noexcept;
@@ -75,6 +102,11 @@ private:
     StepFunction stepFunction_ = StepFunction::BEST_IMPROVEMENT;
     int iterations_ = 100;
     int popsize_ = 100;
+    float evaporation_ = .1f;
+    float elitism_ = 1.f;
+    float pheromoneAttraction_ = 10.f;
+    float objectiveAttraction_ = 1.f;
+    ReinforceStrategy reinforceStrategy_ = ReinforceStrategy::LAMARCK;
     int runs_ = 100;
     std::filesystem::path statsOutfile_;
     InputFiles inputFiles_;

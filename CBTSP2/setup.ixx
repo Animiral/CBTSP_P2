@@ -61,8 +61,8 @@ public:
      */
     explicit SearchBuilder(Configuration::Algorithm algorithm,
         Configuration::StepFunction stepFunction,
-        int iterations,
-        int popsize,
+        int iterations, int popsize, float evaporation, float elitism,
+        float pheromoneAttraction, float objectiveAttraction, ReinforceStrategy reinforceStrategy,
         const std::shared_ptr<Random>& random) noexcept;
 
     /**
@@ -79,14 +79,12 @@ private:
     Configuration::StepFunction stepFunction_;
     int iterations_;
     int popsize_;
+    float evaporation_; // MCO: fraction of pheromone decrease per tick
+    float elitism_; // MCO: factor of pheromone contribution of best solution so far
+    float pheromoneAttraction_; // MCO: to which degree local pheromones attract
+    float objectiveAttraction_; // MCO: to which degree local objective value attracts
+    ReinforceStrategy reinforceStrategy_; // MCO: pheromone update source
     std::shared_ptr<Random> random_;
-
-    // pre-tuned search parameters, to be exposed later
-    constexpr static float evaporation_ = .1f; // MCO: fraction of pheromone decrease per tick
-    constexpr static float elitism_ = 1.f; // MCO: factor of pheromone contribution of best solution so far
-    constexpr static float pheromoneAttraction_ = 10.f; // MCO: to which degree local pheromones attract
-    constexpr static float objectiveAttraction_ = 1.f; //  MCO: to which degree local objective value attracts
-    constexpr static ReinforceStrategy reinforceStrategy_ = ReinforceStrategy::LAMARCK;
 
     std::unique_ptr<DeterministicConstruction> buildDeterministicConstruction() const;
     std::unique_ptr<RandomConstruction> buildRandomConstruction() const;
