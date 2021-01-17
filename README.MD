@@ -1,5 +1,7 @@
 # Solver for the Cost-Balanced Traveling Salesperson Problem
 
+This solver exists on [GitHub](https://github.com/Animiral/CBTSP_P2).
+
 ## Options
 
 * `--suite <single|bench-mco|popsize-mco>` run preset (default: single)
@@ -18,6 +20,18 @@
 * `-r, --runs N` make N search attempts for statistical samples (default: 100)
 * `-d, --dump FILE` output statistical results to FILE (default: no stats output)
 
+All non-option arguments are interpreted as input problem files.
+
+## Output
+
+The best solution of every invocation is written to the *solution file* for the instance.
+e.g. the solution for `0020.txt` is written to `0020.solution`.
+
+If the solution file already exists, it will be overwritten.
+This can easily happen if the program is invoked multiple times or if an invocation triggers more than one statistics-gathering run (running suites).
+
+The program prints its activity to standard output.
+
 ## Sample Invocations
 
 Gather basic results over all instances:
@@ -35,5 +49,5 @@ CBTSP2-Main.exe --suite bench-mco --dump bench-mco-stats.csv instances/0010.txt 
 Run the Popsize Experiment for raw and refined variants:
 
 ```
-CBTSP2-Main.exe --suite popsize-mco --dump popsize-mco-stats.csv instances/0050.txt
+CBTSP2-Main.exe --suite popsize-mco --dump popsize-mco-stats.csv instances/0040.txt
 ```
